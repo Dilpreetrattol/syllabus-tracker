@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div style="text-align: center; padding: var(--space-16) 0;">
+    <h1 style="font-size: var(--text-4xl); margin-bottom: var(--space-4); color: var(--gray-900);">
+        Welcome to Syllabus Tracker
+    </h1>
+    <p style="font-size: var(--text-xl); color: var(--gray-600); margin-bottom: var(--space-8); max-width: 600px; margin-left: auto; margin-right: auto;">
+        Track and manage academic progress across departments, courses, and students
+    </p>
+    {% if not current_user.is_authenticated %}
+    <div style="display: flex; gap: var(--space-4); justify-content: center; margin-bottom: var(--space-16);">
+        <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg">Login to Dashboard</a>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-outline btn-lg">Register Account</a>
+    </div>
+    {% else %}
+    <div style="margin-bottom: var(--space-16);">
+        <a href="{{ url_for('dashboard.' + current_user.role) }}" class="btn btn-primary btn-lg">
+            Go to Your Dashboard →
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="grid grid-cols-3" style="margin-bottom: var(--space-16);">
+    <div class="card">
+        <div style="font-size: 2.5rem; margin-bottom: var(--space-4);">🎓</div>
+        <h3 style="color: var(--primary-600); margin-bottom: var(--space-3);">For Students</h3>
+        <ul style="list-style: none; padding: 0; color: var(--gray-700); line-height: 2;">
+            <li>✓ Track your course progress</li>
+            <li>✓ View completed and pending topics</li>
+            <li>✓ Access course materials & resources</li>
+            <li>✓ Monitor syllabus completion</li>
+        </ul>
+    </div>
+    
+    <div class="card">
+        <div style="font-size: 2.5rem; margin-bottom: var(--space-4);">👨‍🏫</div>
+        <h3 style="color: var(--success); margin-bottom: var(--space-3);">For Teachers</h3>
+        <ul style="list-style: none; padding: 0; color: var(--gray-700); line-height: 2;">
+            <li>✓ Manage course syllabi</li>
+            <li>✓ Update topic completion status</li>
+            <li>✓ Upload resources & materials</li>
+            <li>✓ Monitor student progress</li>
+        </ul>
+    </div>
+    
+    <div class="card">
+        <div style="font-size: 2.5rem; margin-bottom: var(--space-4);">📊</div>
+        <h3 style="color: var(--warning); margin-bottom: var(--space-3);">For Administration</h3>
+        <ul style="list-style: none; padding: 0; color: var(--gray-700); line-height: 2;">
+            <li>✓ Department-wide progress overview</li>
+            <li>✓ Manage course assignments</li>
+            <li>✓ Generate comprehensive reports</li>
+            <li>✓ Track faculty performance</li>
+        </ul>
+    </div>
+</div>
+
+<div class="card" style="text-align: center; background: linear-gradient(135deg, var(--primary-50), var(--gray-50)); border: 2px solid var(--primary-200);">
+    <h2 style="color: var(--primary-700); margin-bottom: var(--space-4);">Key Features</h2>
+    <div class="grid grid-cols-4" style="gap: var(--space-8); margin-top: var(--space-6);">
+        <div>
+            <div style="font-size: 2rem; margin-bottom: var(--space-2);">📅</div>
+            <h4 style="color: var(--gray-800); font-size: var(--text-sm); margin: 0;">Real-time Tracking</h4>
+        </div>
+        <div>
+            <div style="font-size: 2rem; margin-bottom: var(--space-2);">📈</div>
+            <h4 style="color: var(--gray-800); font-size: var(--text-sm); margin: 0;">Progress Analytics</h4>
+        </div>
+        <div>
+            <div style="font-size: 2rem; margin-bottom: var(--space-2);">🔔</div>
+            <h4 style="color: var(--gray-800); font-size: var(--text-sm); margin: 0;">Notifications</h4>
+        </div>
+        <div>
+            <div style="font-size: 2rem; margin-bottom: var(--space-2);">📝</div>
+            <h4 style="color: var(--gray-800); font-size: var(--text-sm); margin: 0;">Detailed Reports</h4>
+        </div>
+    </div>
+</div>
+{% endblock %}

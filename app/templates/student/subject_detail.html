@@ -1,0 +1,60 @@
+{% extends 'student_base.html' %}
+{% block title %}Subject Detail{% endblock %}
+{% block student_content %}
+<div class="student-portal subject-detail-view">
+  <div class="subject-header glass-panel">
+    <div>
+      <h1>{{ subject.name }}</h1>
+      <p class="code">{{ subject.code }}</p>
+      <p class="teacher">Instructor: {{ instructors[0].name }}</p>
+    </div>
+    <div class="progress-circle large" data-progress="{{ progress_percent }}">
+      <svg viewBox="0 0 120 120">
+        <circle cx="60" cy="60" r="54" class="bg"></circle>
+        <circle cx="60" cy="60" r="54" class="progress" style="stroke-dasharray: {{ (progress_percent / 100) * 339 }}, 339"></circle>
+      </svg>
+      <div class="value">{{ progress_percent }}%</div>
+    </div>
+  </div>
+
+  <div class="learn glass-panel">
+    <h2>What You Will Learn</h2>
+    <ul class="learn-items">
+      {% for item in learn_items %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="instructors glass-panel">
+    <h2>Instructors</h2>
+    <div class="list">
+      {% for inst in instructors %}
+      <div class="inst-card">
+        <div class="avatar">{{ inst.name[0] }}</div>
+        <div class="meta">
+          <p class="name">{{ inst.name }}</p>
+          <p class="role">{{ inst.role }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="syllabus glass-panel">
+    <h2>Syllabus</h2>
+    <div class="items">
+      {% for topic in topics %}
+      <div class="item {% if topic.is_completed %}done{% endif %}">
+        <div class="icon">{% if topic.is_completed %}✓{% else %}→{% endif %}</div>
+        <div class="content">
+          <p class="title">{{ topic.name }}</p>
+          <p class="desc">{{ topic.description or 'No description provided yet.' }}</p>
+        </div>
+        <div class="status">{% if topic.is_completed %}Completed{% else %}Pending{% endif %}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

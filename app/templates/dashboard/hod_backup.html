@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}HOD Dashboard{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/hod-dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="hod-dashboard">
+    <div class="dashboard-header">
+        <h1>Department Overview</h1>
+        <p>Head of Department - {{ current_user.department }}</p>
+    </div>
+
+    <div class="metrics-grid">
+        <div class="metric-card" style="border-top-color: #3B82F6;">
+            <h3>Total Faculty</h3>
+            <p class="metric-value">12</p>
+        </div>
+        <div class="metric-card" style="border-top-color: #10B981;">
+            <h3>Active Courses</h3>
+            <p class="metric-value">24</p>
+        </div>
+        <div class="metric-card" style="border-top-color: #F59E0B;">
+            <h3>Total Students</h3>
+            <p class="metric-value">480</p>
+        </div>
+        <div class="metric-card">
+            <h3>Avg Progress</h3>
+            <p class="metric-value">68%</p>
+        </div>
+    </div>
+
+    <div class="department-section">
+        <h2 class="section-title">Faculty Members</h2>
+        <div class="faculty-list">
+            <div class="faculty-item">
+                <div>
+                    <h4 style="margin: 0 0 0.25rem 0; color: var(--hod-text);">Prof. Admin</h4>
+                    <p style="margin: 0; font-size: 0.875rem; color: var(--hod-text-light);">Teaching 2 subjects • 45 students</p>
+                </div>
+                <a href="#" class="btn-view-report">View Report</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="department-section">
+        <h2 class="section-title">Progress Reports</h2>
+        <p style="color: var(--hod-text-light); text-align: center; padding: 2rem;">Comprehensive reports coming soon...</p>
+    </div>
+</div>
+{% endblock %}

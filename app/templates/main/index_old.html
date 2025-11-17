@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h1>Welcome to Syllabus Tracker</h1>
+    <p>Track and manage your academic progress efficiently</p>
+    {% if not current_user.is_authenticated %}
+    <div class="hero-actions">
+        <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Login</a>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-secondary">Register</a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="features">
+    <div class="card">
+        <h3>For Students</h3>
+        <ul>
+            <li>Track your course progress</li>
+            <li>View completed and pending topics</li>
+            <li>Access course materials</li>
+        </ul>
+    </div>
+    
+    <div class="card">
+        <h3>For Teachers</h3>
+        <ul>
+            <li>Manage course syllabi</li>
+            <li>Update topic completion status</li>
+            <li>Monitor student progress</li>
+        </ul>
+    </div>
+    
+    <div class="card">
+        <h3>For HODs & Coordinators</h3>
+        <ul>
+            <li>Overview of department progress</li>
+            <li>Manage course assignments</li>
+            <li>Generate progress reports</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

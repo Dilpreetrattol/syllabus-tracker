@@ -1,0 +1,96 @@
+/* Student Portal Scoped Styles (dashboard + subjects + detail)
+   Scoped under .student-portal to avoid conflicts with global glass styles */
+.student-portal {
+  --sp-bg:#f3eaea;
+  --sp-panel:#ffffff;
+  --sp-accent1:#e64b49;
+  --sp-accent2:#f08a88;
+  --sp-muted:#b29ea0;
+  --sp-card:#f6eaea;
+  --sp-radius:28px;
+  --sp-sidebar-w:240px;
+  --sp-text:#2a2a2a;
+  --sp-soft:#f1e6e6;
+  color:var(--sp-text);
+}
+
+.student-portal a { text-decoration:none; }
+
+/* Layout wrapper */
+.student-portal .app { display:flex; gap:24px; padding:28px; align-items:flex-start; }
+
+/* Sidebar */
+.student-portal .sidebar { width:var(--sp-sidebar-w); background:linear-gradient(180deg,var(--sp-accent2),#b84f4f); border-radius:24px; padding:22px; color:#fff; display:flex; flex-direction:column; gap:18px; box-shadow:0 10px 30px rgba(0,0,0,.08); }
+.student-portal .brand { width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,.12); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:20px; }
+.student-portal .nav-item { display:flex; align-items:center; gap:12px; padding:12px; border-radius:14px; cursor:pointer; transition:all .18s; font-weight:500; }
+.student-portal .nav-item:hover { transform:translateY(-2px); }
+.student-portal .nav-item.active { background:linear-gradient(180deg,#ff3d3d,#d63c3c); box-shadow:0 8px 20px rgba(214,60,60,0.2); font-weight:700; }
+.student-portal .logout { margin-top:auto; font-size:13px; opacity:.9; }
+
+/* Main panel */
+.student-portal .main-panel { flex:1; background:var(--sp-panel); border-radius:var(--sp-radius); padding:28px; box-shadow:0 20px 50px rgba(0,0,0,.06); }
+
+/* Headings */
+.student-portal .h1 { font-size:32px; font-weight:800; margin:0 0 12px; }
+.student-portal .h2 { font-size:20px; font-weight:700; margin:0 0 8px; color:var(--sp-text); }
+
+/* Card */
+.student-portal .card { background:var(--sp-card); padding:18px; border-radius:14px; box-shadow:inset 0 2px 8px rgba(255,255,255,.6); }
+
+/* Hero banner */
+.student-portal .hero { display:flex; justify-content:space-between; align-items:center; background:linear-gradient(90deg,#e7625f,#ff9a98); color:#fff; padding:28px; border-radius:22px; margin-bottom:20px; }
+
+/* Course card list preview */
+.student-portal .courses { display:flex; gap:20px; align-items:center; }
+.student-portal .course-card { width:320px; padding:18px; border-radius:16px; background:linear-gradient(180deg,#ffdede,#ffd6d6); box-shadow:0 10px 30px rgba(230,80,80,.12); display:flex; flex-direction:column; justify-content:space-between; min-height:150px; }
+.student-portal .course-card button { background:var(--sp-accent1); color:#fff; border:none; padding:8px 14px; border-radius:999px; cursor:pointer; font-weight:600; font-size:14px; }
+.student-portal .course-card button:hover { filter:brightness(.92); }
+
+/* Circular progress */
+.student-portal .progress-circle { width:160px; height:160px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:32px; background:radial-gradient(circle at 30% 30%, #fff 0%, #ffecec 30%, #ffdede 100%); box-shadow:0 8px 25px rgba(230,80,80,.15); }
+
+/* Enrolled courses table */
+.student-portal .table-wrap { margin-top:18px; border-radius:12px; padding:14px; background:#f7eaea; }
+.student-portal table { width:100%; border-collapse:collapse; font-size:14px; }
+.student-portal th, .student-portal td { padding:14px 12px; text-align:left; border-bottom:1px solid rgba(0,0,0,.04); }
+.student-portal thead th { font-weight:700; color:var(--sp-muted); }
+.student-portal tbody tr:hover { background:rgba(0,0,0,.025); }
+
+/* Subject detail page */
+.student-portal .course-header { display:flex; justify-content:space-between; align-items:center; padding:18px; border-radius:16px; background:linear-gradient(90deg,#f3b2af,#f5d1d0); margin-bottom:16px; }
+.student-portal .learn-list { background:#fbf4f4; padding:16px; border-radius:10px; margin-bottom:18px; }
+.student-portal .instructors { display:flex; gap:28px; }
+.student-portal .instructor { flex:1; text-align:center; }
+.student-portal .instructor .avatar { width:86px; height:86px; border-radius:50%; background:#eee; margin:0 auto 10px; }
+.student-portal .syllabus .item { display:flex; justify-content:space-between; align-items:center; padding:12px; border-radius:12px; border:2px solid rgba(0,0,0,.06); background:#fff; margin-bottom:10px; transition:.15s; }
+.student-portal .syllabus .item:hover { border-color:rgba(0,0,0,.12); }
+.student-portal .syllabus .week-badge { width:54px; height:54px; border-radius:50%; border:2px solid #cdb7d3; display:flex; align-items:center; justify-content:center; font-weight:800; color:#7b3fa8; font-size:18px; }
+
+/* Utility */
+.student-portal .muted { color:var(--sp-muted); }
+.student-portal .accent-link { color:var(--sp-accent1); font-weight:700; cursor:pointer; }
+.student-portal .accent-link:hover { text-decoration:underline; }
+
+/* Responsive */
+@media (max-width:900px) {
+  .student-portal .app { flex-direction:column; padding:18px; }
+  .student-portal .sidebar { width:100%; flex-direction:row; gap:12px; overflow:auto; border-radius:16px; }
+  .student-portal .brand { width:48px; height:48px; }
+  .student-portal .main-panel { padding:20px; }
+  .student-portal .courses { flex-direction:column; }
+  .student-portal .course-card { width:100%; }
+  .student-portal .hero { flex-direction:column; gap:20px; text-align:center; }
+}
+
+@media (max-width:600px) {
+  .student-portal .hero { padding:22px; }
+  .student-portal .progress-circle { width:120px; height:120px; font-size:24px; }
+  .student-portal th, .student-portal td { padding:10px 8px; font-size:13px; }
+  .student-portal .sidebar .nav-item { padding:10px; font-size:12px; }
+  .student-portal .courses { gap:14px; }
+  .student-portal .course-card { min-height:130px; }
+  .student-portal .syllabus .item { flex-direction:column; align-items:flex-start; gap:6px; }
+}
+
+/* Horizontal scroll helper for tables on very narrow screens */
+.student-portal .subjects-table-wrapper { overflow-x:auto; }

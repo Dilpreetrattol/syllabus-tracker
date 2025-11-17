@@ -1,0 +1,335 @@
+{% extends 'coordinator_base.html' %}
+{% set active_section = 'subjects' %}
+{% block title %}Subject & Enrollment Management{% endblock %}
+{% block coordinator_content %}
+  <div class="header">
+    <div class="title">Subject & Enrollment Management</div>
+    <div class="user">
+      <div class="avatar">{{ (current_user.name.split()[0][0] + (current_user.name.split()[1][0] if current_user.name.split()|length>1 else ''))|upper }}</div>
+      <div>
+        <div style="font-weight:800">{{ current_user.name }}</div>
+        <div style="color:var(--muted);font-size:13px">UG Coordinator</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;">
+    <div class="badge">Subject Definition</div>
+    <div class="badge" style="background:linear-gradient(90deg,#f2a79d,#f6c8c6);color:#5b1919">Enrollment Management</div>
+  </div>
+
+  <div class="form-area">
+    <div class="form-card">
+      <div style="font-weight:800;margin-bottom:10px">Create / Edit Subject</div>
+      <input class="input" placeholder="Subject Name" id="subName" />
+      <input class="input" placeholder="Subject Code" id="subCode" />
+      <div style="display:flex;gap:8px">
+        <input class="input" placeholder="Credits" style="flex:1" />
+        <input class="input" placeholder="Expected Completion Date" style="width:200px" />
+      </div>
+      <select class="input" id="teacherSelect">
+        <option>Assign Teacher</option>
+        {% for t in teachers %}
+          <option value="{{ t.id }}">{{ t.name }}</option>
+        {% endfor %}
+      </select>
+      <button class="btn" style="margin-top:6px;" id="saveSubject">Save Subject</button>
+      <div class="table-wrap" style="margin-top:14px;">
+        <table>
+          <thead>
+            <tr><th>Code</th><th>Name</th><th>Teacher</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for s in subjects %}
+            <tr>
+              <td>{{ s.code }}</td>
+              <td>{{ s.name }}</td>
+              <td>{{ s.teacher.name if s.teacher_id else '—' }}</td>
+              <td style="text-align:right;color:var(--accent);font-weight:700">
+                <button class="btn" data-manage-subject="{{ s.id }}" data-subject-name="{{ s.name }}" data-subject-code="{{ s.code }}">Edit Syllabus</button>
+              </td>
+            </tr>
+            {% endfor %}
+            {% if subjects|length == 0 %}
+            <tr><td colspan="4" style="text-align:center;padding:16px;">No subjects found.</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <aside class="syllabus-card">
+      <div style="font-weight:800;margin-bottom:10px">Syllabus Topics <span id="syllHeader" style="color:var(--muted);font-weight:600"></span></div>
+
+      <div id="topicList"></div>
+
+      <div style="margin-top:10px;display:flex;gap:8px;">
+        <input class="input" id="newTopic" placeholder="New topic name" style="flex:1" />
+        <button class="btn" id="addTopic">Add</button>
+      </div>
+
+      <button class="btn" style="width:100%;margin-top:12px;background:var(--accent)">Bulk Upload Student List (CSV)</button>
+      <div style="margin-top:16px;border-top:1px solid #eee;padding-top:12px;">
+        <div style="font-weight:800;margin-bottom:8px">Enrollments</div>
+        <div id="enrollList" style="margin-bottom:10px;color:#666">Select a subject to view enrollments.</div>
+        <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+          <input type="file" id="csvFile" accept=".csv" />
+          <button class="btn" id="uploadCsv">Upload CSV</button>
+          <a class="btn" id="downloadCsvTpl" href="/api/coordinator/enrollments/template" style="text-decoration:none">Download CSV Template</a>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <input class="input" id="enrollEmail" placeholder="Add student by email" style="flex:1" />
+          <button class="btn" id="addEnroll">Add</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    let currentSubjectId = null;
+
+    function renderTopics(items){
+      const list = document.getElementById('topicList');
+      list.innerHTML='';
+      if(!items || items.length===0){
+        list.innerHTML = '<div style="color:#666">No topics yet.</div>';
+        return;
+      }
+      items.forEach(t=>{
+        const row = document.createElement('div');
+        row.className='topic';
+        row.dataset.topicId = t.id;
+        row.innerHTML = `<div style="display:flex;flex-direction:column;gap:4px">
+            <div><strong>${t.order}.</strong> <span data-topic-name="${t.id}">${t.name}</span></div>
+            <div style="display:flex;align-items:center;gap:8px;color:#666;font-size:12px">
+              <label for="date-${t.id}">Expected:</label>
+              <input type="date" id="date-${t.id}" data-topic-date="${t.id}" value="${t.expected_date || ''}" />
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+              <button title="Move up" data-move-up="${t.id}" style="border:none;background:transparent;cursor:pointer">▲</button>
+              <button title="Move down" data-move-down="${t.id}" style="border:none;background:transparent;cursor:pointer">▼</button>
+              <button title="Edit" data-edit-topic="${t.id}" style="border:none;background:transparent;cursor:pointer">✏️</button>
+              <button title="Delete" data-del-topic="${t.id}" style="border:none;background:transparent;cursor:pointer">🗑️</button>
+            </div>`;
+        list.appendChild(row);
+      });
+    }
+
+    async function loadTopics(subjectId){
+      const hdr = document.getElementById('syllHeader');
+      try{
+        const res = await fetch(`/api/coordinator/subjects/${subjectId}/topics`);
+        if(!res.ok){ renderTopics([]); return; }
+        const data = await res.json();
+        hdr.textContent = data.subject ? `for ${data.subject.code || ''} ${data.subject.name || ''}` : '';
+        renderTopics(data.topics || []);
+      }catch(e){ renderTopics([]); }
+    }
+
+    // Click handler for Edit Syllabus buttons
+      function collectOrder(){
+        const ids = Array.from(document.querySelectorAll('#topicList .topic')).map(el=>Number(el.dataset.topicId));
+        return ids;
+      }
+
+      async function sendReorder(){
+        if(!currentSubjectId) return;
+        const order = collectOrder();
+        try{
+          await fetch(`/api/coordinator/subjects/${currentSubjectId}/topics/reorder`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ order }) });
+        }catch(e){ /* ignore */ }
+      }
+
+    document.addEventListener('click', (e)=>{
+      const btn = e.target.closest('[data-manage-subject]');
+      if(btn){
+        currentSubjectId = Number(btn.dataset.manageSubject);
+        loadTopics(currentSubjectId);
+      }
+      const del = e.target.closest('[data-del-topic]');
+      if(del){
+        const topicId = Number(del.dataset.delTopic);
+        if(confirm('Delete this topic?')){
+          fetch(`/api/coordinator/topics/${topicId}`, { method:'DELETE' })
+            .then(r=>r.ok ? r.json(): Promise.reject())
+            .then(()=> loadTopics(currentSubjectId))
+            .catch(()=> alert('Failed to delete topic'));
+        }
+      }
+        const edit = e.target.closest('[data-edit-topic]');
+        if(edit){
+          const topicId = Number(edit.dataset.editTopic);
+          const nameEl = document.querySelector(`[data-topic-name="${topicId}"]`);
+          const currentName = nameEl ? nameEl.textContent.trim() : '';
+          const newName = prompt('Edit topic name', currentName);
+          if(newName!=null){
+            fetch(`/api/coordinator/topics/${topicId}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name: newName }) })
+              .then(r=>r.ok ? r.json(): Promise.reject())
+              .then(()=> loadTopics(currentSubjectId))
+              .catch(()=> alert('Failed to update topic'));
+          }
+        }
+        const up = e.target.closest('[data-move-up]');
+        if(up){
+          const id = Number(up.dataset.moveUp);
+          const row = document.querySelector(`.topic[data-topic-id="${id}"]`);
+          if(row && row.previousElementSibling){
+            row.parentNode.insertBefore(row, row.previousElementSibling);
+            sendReorder();
+          }
+        }
+        const down = e.target.closest('[data-move-down]');
+        if(down){
+          const id = Number(down.dataset.moveDown);
+          const row = document.querySelector(`.topic[data-topic-id="${id}"]`);
+          if(row && row.nextElementSibling){
+            row.parentNode.insertBefore(row.nextElementSibling, row);
+            sendReorder();
+          }
+        }
+    });
+
+    // Add topic to selected subject
+    document.getElementById('addTopic').addEventListener('click', async ()=>{
+      if(!currentSubjectId){ alert('Select a subject to edit syllabus.'); return; }
+      const v = document.getElementById('newTopic').value.trim();
+      if(!v){ alert('Enter topic name'); return; }
+      try{
+        const res = await fetch(`/api/coordinator/subjects/${currentSubjectId}/topics`, {
+          method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name: v })
+        });
+        if(!res.ok){ alert('Failed to add topic'); return; }
+        document.getElementById('newTopic').value='';
+        loadTopics(currentSubjectId);
+      }catch(e){ alert('Failed to add topic'); }
+    });
+
+    // Create subject via API
+    document.getElementById('saveSubject').addEventListener('click', async ()=>{
+      const name = document.getElementById('subName').value.trim();
+      const code = document.getElementById('subCode').value.trim();
+      const teacherSel = document.getElementById('teacherSelect');
+      const teacherId = teacherSel && teacherSel.value && teacherSel.value !== 'Assign Teacher' ? Number(teacherSel.value) : null;
+      if(!name || !code || !teacherId){
+        alert('Please enter name, code and select a teacher.');
+        return;
+      }
+      try{
+        const res = await fetch('/api/coordinator/subjects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, code, teacher_id: teacherId })
+        });
+        if(!res.ok){
+          const err = await res.json().catch(()=>({error:'Unknown error'}));
+          alert('Error: '+ (err.error || res.statusText));
+          return;
+        }
+        const data = await res.json();
+        alert('Subject created: '+data.name+' ('+data.code+')');
+        window.location.reload();
+      }catch(e){
+        alert('Failed to create subject');
+      }
+    });
+
+    // Date change handler
+    document.addEventListener('change', (e)=>{
+      const dateEl = e.target.closest('[data-topic-date]');
+      if(dateEl){
+        const topicId = Number(dateEl.dataset.topicDate);
+        const value = dateEl.value; // '' or YYYY-MM-DD
+        fetch(`/api/coordinator/topics/${topicId}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ expected_date: value }) })
+          .then(r=>{ if(!r.ok) throw new Error(); })
+          .catch(()=> alert('Failed to update expected date'));
+      }
+    });
+
+    async function loadEnrollments(){
+      if(!currentSubjectId){
+        document.getElementById('enrollList').textContent = 'Select a subject to view enrollments.';
+        return;
+      }
+      const container = document.getElementById('enrollList');
+      container.textContent = 'Loading...';
+      try{
+        const res = await fetch(`/api/coordinator/subjects/${currentSubjectId}/enrollments`);
+        if(!res.ok){ container.textContent = 'Failed to load enrollments.'; return; }
+        const data = await res.json();
+        if(!data.enrollments || data.enrollments.length===0){ container.textContent = 'No students enrolled yet.'; return; }
+        const rows = data.enrollments.map(e=>`<tr><td>${e.name}<br><small style="color:var(--muted)">${e.email}</small></td><td style="text-align:right"><button data-del-enroll="${e.student_id}" class="btn" style="background:#ddd;color:#333">Remove</button></td></tr>`).join('');
+        container.innerHTML = `<div class="table-wrap" style="background:#fff;padding:0"><table><thead><tr><th>Student</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+      }catch(e){ container.textContent = 'Failed to load enrollments.'; }
+    }
+
+    // When subject selected, also load enrollments
+    document.addEventListener('click', (e)=>{
+      const btn = e.target.closest('[data-manage-subject]');
+      if(btn){ setTimeout(loadEnrollments, 0); }
+    });
+
+    // Delete enrollment
+    document.addEventListener('click', (e)=>{
+      const del = e.target.closest('[data-del-enroll]');
+      if(del && currentSubjectId){
+        const sid = Number(del.dataset.delEnroll);
+        if(confirm('Remove this student from the subject?')){
+          fetch(`/api/coordinator/subjects/${currentSubjectId}/enrollments/${sid}`, { method:'DELETE' })
+            .then(r=>r.ok ? r.json(): Promise.reject())
+            .then(()=> loadEnrollments())
+            .catch(()=> alert('Failed to remove enrollment'));
+        }
+      }
+    });
+
+    // Add enrollment by email
+    document.getElementById('addEnroll').addEventListener('click', async ()=>{
+      if(!currentSubjectId){ alert('Select a subject first.'); return; }
+      const email = document.getElementById('enrollEmail').value.trim();
+      if(!email){ alert('Enter a student email'); return; }
+      try{
+        let res = await fetch(`/api/coordinator/subjects/${currentSubjectId}/enrollments`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email }) });
+        if(res.status === 404){
+          if(confirm('Student not found. Create a new student?')){
+            const name = prompt('Enter student full name');
+            if(name){
+              const createRes = await fetch('/api/coordinator/users', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, email, role:'student' }) });
+              if(createRes.ok){
+                // Try enrollment again
+                res = await fetch(`/api/coordinator/subjects/${currentSubjectId}/enrollments`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email }) });
+              }else{
+                const er = await createRes.json().catch(()=>({error:'Failed to create user'}));
+                alert('User create error: '+(er.error||'Failed'));
+                return;
+              }
+            }else{
+              return;
+            }
+          }else{
+            return;
+          }
+        }
+        if(!res.ok){ const err = await res.json().catch(()=>({error:'error'})); alert('Error: '+(err.error||'Failed')); return; }
+        document.getElementById('enrollEmail').value='';
+        loadEnrollments();
+      }catch(e){ alert('Failed to add enrollment'); }
+    });
+
+    // Upload CSV
+    document.getElementById('uploadCsv').addEventListener('click', async ()=>{
+      if(!currentSubjectId){ alert('Select a subject first.'); return; }
+      const file = document.getElementById('csvFile').files[0];
+      if(!file){ alert('Choose a CSV file'); return; }
+      const form = new FormData();
+      form.append('file', file);
+      try{
+        const res = await fetch(`/api/coordinator/subjects/${currentSubjectId}/enrollments/upload`, { method:'POST', body: form });
+        if(!res.ok){ alert('Upload failed'); return; }
+        const data = await res.json();
+        alert(`Uploaded. Added: ${data.added}, Skipped: ${data.skipped}`);
+        loadEnrollments();
+      }catch(e){ alert('Upload failed'); }
+    });
+  </script>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}HOD Dashboard{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/hod-dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="hod-dashboard">
+    <div class="dashboard-header">
+        <h1>Department Overview</h1>
+        <p>Head of Department - {{ current_user.department }}</p>
+    </div>
+
+    <div class="metrics-grid">
+        <div class="metric-card" style="border-top-color: #3B82F6;">
+            <h3>TOTAL FACULTY</h3>
+            <p class="metric-value">{{ faculty_count if faculty_count is not none else '0' }}</p>
+        </div>
+        <div class="metric-card" style="border-top-color: #10B981;">
+            <h3>ACTIVE SUBJECTS</h3>
+            <p class="metric-value">{{ subject_count if subject_count is not none else '0' }}</p>
+        </div>
+        <div class="metric-card" style="border-top-color: #F59E0B;">
+            <h3>TOTAL STUDENTS</h3>
+            <p class="metric-value">{{ student_count if student_count is not none else '0' }}</p>
+        </div>
+        <div class="metric-card" style="border-top-color: #EF4444;">
+            <h3>AVG PROGRESS</h3>
+            <p class="metric-value">{{ avg_progress if avg_progress is not none else '0' }}%</p>
+        </div>
+    </div>
+
+    <div class="department-section">
+        <h2 class="section-title">Faculty Members</h2>
+        <div class="faculty-list">
+            {% if faculty_data and faculty_data|length > 0 %}
+                {% for item in faculty_data %}
+                <div class="faculty-item">
+                    <div>
+                        <h4 style="margin: 0 0 0.25rem 0; color: var(--hod-text);">{{ item.teacher.name }}</h4>
+                        <p style="margin: 0; font-size: 0.875rem; color: var(--hod-text-light);">
+                            Teaching {{ item.subject_count }} subject{{ 's' if item.subject_count != 1 else '' }} • 
+                            {{ item.student_count }} student{{ 's' if item.student_count != 1 else '' }}
+                        </p>
+                    </div>
+                    <a href="{{ url_for('dashboard.hod') }}" class="btn-view-report">View Report</a>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="color: var(--hod-text-light); text-align: center; padding: 2rem;">No faculty members found in this department.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="department-section">
+        <h2 class="section-title">Progress Reports</h2>
+        <p style="color: var(--hod-text-light); text-align: center; padding: 2rem;">Comprehensive reports coming soon...</p>
+    </div>
+</div>
+{% endblock %}

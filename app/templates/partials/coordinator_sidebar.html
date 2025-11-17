@@ -1,0 +1,9 @@
+<aside class="sidebar">
+  <div class="brand">ti</div>
+  <a class="nav-item {% if active_section=='dashboard' %}active{% endif %}" href="{{ url_for('dashboard.coordinator') }}">🏠 <div>Dashboard</div></a>
+  <a class="nav-item {% if active_section=='users' %}active{% endif %}" href="{{ url_for('dashboard.coordinator_users') }}">👥 <div>Users</div></a>
+  <a class="nav-item {% if active_section=='subjects' %}active{% endif %}" href="{{ url_for('dashboard.coordinator_subjects') }}">📚 <div>Subjects</div></a>
+  <a class="nav-item {% if active_section=='enrollments' %}active{% endif %}" href="{{ url_for('dashboard.coordinator_enrollments') }}">🧾 <div>Enrollments</div></a>
+  <div class="nav-item">📅 <div>Schedule</div></div>
+  <a class="logout" href="{{ url_for('auth.logout') }}">Logout</a>
+</aside>

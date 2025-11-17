@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/teacher-portal.css') }}">
+{% endblock %}
+{% block content %}
+<div class="teacher-portal">
+  <div class="app">
+    {% include 'partials/teacher_sidebar.html' %}
+    <main class="main-panel">
+      {% block teacher_content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% endblock %}

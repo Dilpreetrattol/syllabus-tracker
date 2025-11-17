@@ -1,0 +1,58 @@
+{% extends 'teacher_base.html' %}
+{% set active_section = 'dashboard' %}
+{% block title %}Teacher Dashboard{% endblock %}
+{% block teacher_content %}
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:24px;">
+    <div style="flex:1;min-width:320px;">
+        <div class="badge">🎓 Syllabus & Progress</div>
+        <div class="h1" style="margin-top:14px;">Welcome back, {{ current_user.name }}</div>
+        <div style="color:var(--t-muted);margin-top:10px;max-width:640px;">Overview of your teaching assignments and their current progress.</div>
+    </div>
+    <div style="width:220px;border-radius:14px;display:flex;flex-direction:column;align-items:center;gap:10px;">
+        <div style="width:84px;height:84px;border-radius:50%;background:linear-gradient(90deg,#ffdede,#fff);display:flex;align-items:center;justify-content:center;font-weight:800;">👩‍🏫</div>
+        <div style="text-align:center"><div style="font-weight:800">{{ current_user.name }}</div><div style="color:var(--t-muted)">Instructor</div></div>
+    </div>
+</div>
+
+<div class="overview">
+    <div class="metric"><div class="label">TOTAL ASSIGNED COURSES :</div><div class="value">{{ metrics.total_assigned }}</div></div>
+    <div class="metric"><div class="label">AVG. COURSE PROGRESS :</div><div class="value">{{ metrics.avg_progress }}%</div></div>
+    <div class="metric"><div class="label">PENDING UPDATES</div><div class="value">{{ metrics.pending_updates }}</div></div>
+</div>
+
+<div class="table-wrap" id="subjects">
+    <table>
+        <thead>
+            <tr>
+                <th>Subject Code</th>
+                <th>Subject Name</th>
+                <th>Enrolled Students</th>
+                <th>Progress</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in subject_rows %}
+            <tr>
+                <td>{{ row.code }}</td>
+                <td>{{ row.name }}</td>
+                <td>{{ row.enrolled }}</td>
+                <td>{{ row.progress_percent }}%</td>
+                <td style="text-align:right;color:var(--t-accent);font-weight:700"><a href="{{ url_for('dashboard.teacher_subject', subject_id=row.subject.id) }}" style="color:inherit;text-decoration:none;">Manage</a></td>
+            </tr>
+            {% endfor %}
+            {% if subject_rows|length == 0 %}
+            <tr><td colspan="5" style="text-align:center;padding:28px;">No subjects assigned yet.</td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<aside style="width:260px;margin-top:28px;">
+    <div class="quick">
+        <div style="font-weight:800;margin-bottom:10px">Quick Actions:</div>
+        <button class="primary" disabled>Log Topic Coverage</button>
+        <div style="padding:10px 0;border-top:1px solid #f0e7e7;margin-top:8px;text-align:center;color:var(--t-accent);font-weight:700;">View all My Subjects</div>
+    </div>
+</aside>
+{% endblock %}

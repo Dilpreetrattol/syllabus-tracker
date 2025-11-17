@@ -1,0 +1,146 @@
+{% extends 'coordinator_base.html' %}
+{% set active_section = 'enrollments' %}
+{% block title %}Enrollments{% endblock %}
+{% block coordinator_content %}
+  <div class="header">
+    <div class="title">Enrollments</div>
+    <div class="user">
+      <div class="avatar">{{ (current_user.name.split()[0][0] + (current_user.name.split()[1][0] if current_user.name.split()|length>1 else ''))|upper }}</div>
+      <div>
+        <div style="font-weight:800">{{ current_user.name }}</div>
+        <div style="color:var(--muted);font-size:13px">UG Coordinator</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="search-row">
+    <select class="search" id="subjectFilter" style="max-width:360px">
+      <option value="">Select subject…</option>
+      {% for s in subjects %}
+        <option value="{{ s.id }}">{{ s.code }} — {{ s.name }}</option>
+      {% endfor %}
+    </select>
+    <input class="search" id="q" placeholder="Search student by name/email" />
+    <select class="search" id="statusFilter" style="max-width:140px">
+      <option value="">All Statuses</option>
+      <option value="active">Active</option>
+      <option value="completed">Completed</option>
+      <option value="dropped">Dropped</option>
+    </select>
+    <button class="btn" id="exportCsv" disabled>Export CSV</button>
+  </div>
+
+  <div id="enrollTableWrap" class="table-wrap"><div style="color:#666">Choose a subject to view enrollments.</div></div>
+
+  <div style="display:flex;gap:8px;align-items:center;margin-top:12px">
+    <input type="file" id="csvFile" accept=".csv" />
+    <button class="btn" id="uploadCsv" disabled>Upload CSV</button>
+    <a class="btn" id="downloadCsvTpl" href="/api/coordinator/enrollments/template" style="text-decoration:none">Download CSV Template</a>
+  </div>
+
+  <script>
+    const subjSel = document.getElementById('subjectFilter');
+    const searchInput = document.getElementById('q');
+    const statusFilter = document.getElementById('statusFilter');
+    const wrap = document.getElementById('enrollTableWrap');
+    let rowsCache = [];
+
+    async function loadEnrollments(subjectId){
+      wrap.innerHTML = 'Loading…';
+      try{
+        const res = await fetch(`/api/coordinator/subjects/${subjectId}/enrollments`);
+        if(!res.ok){ wrap.innerHTML = 'Failed to load.'; return; }
+        const data = await res.json();
+        rowsCache = data.enrollments || [];
+        renderTable();
+      }catch(e){ wrap.innerHTML = 'Failed to load.'; }
+    }
+
+    function renderTable(){
+      const q = (searchInput.value || '').toLowerCase();
+      const status = statusFilter.value;
+      const filtered = rowsCache.filter(r=> {
+        const match = (r.name + ' ' + r.email).toLowerCase().includes(q);
+        const statusMatch = !status || r.status === status;
+        return match && statusMatch;
+      });
+      if(filtered.length===0){
+        wrap.innerHTML = '<div style="color:#666">No enrollments found.</div>';
+        return;
+      }
+      const rows = filtered.map(e=>`<tr><td>${e.name}<br><small style="color:var(--muted)">${e.email}</small></td><td>${e.status||''}</td><td style="text-align:right"><button class="btn" data-del="${e.student_id}" style="background:#ddd;color:#333">Remove</button></td></tr>`).join('');
+      wrap.innerHTML = `<table><thead><tr><th>Student</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+    subjSel.addEventListener('change', ()=>{
+      const sid = subjSel.value;
+      document.getElementById('uploadCsv').disabled = !sid;
+      document.getElementById('exportCsv').disabled = !sid;
+      if(!sid){ wrap.innerHTML = '<div style="color:#666">Choose a subject to view enrollments.</div>'; return; }
+      loadEnrollments(sid);
+    });
+
+    searchInput.addEventListener('input', ()=> renderTable());
+    statusFilter.addEventListener('change', ()=> renderTable());
+
+    document.addEventListener('click', (e)=>{
+      const del = e.target.closest('[data-del]');
+      const sid = subjSel.value;
+      if(del && sid){
+        const studentId = Number(del.dataset.del);
+        if(confirm('Remove this student from the subject?')){
+          fetch(`/api/coordinator/subjects/${sid}/enrollments/${studentId}`, { method:'DELETE' })
+            .then(r=>r.ok ? r.json(): Promise.reject())
+            .then(()=> loadEnrollments(sid))
+            .catch(()=> alert('Failed to remove'));
+        }
+      }
+    });
+
+    // CSV preview + upload
+    document.getElementById('uploadCsv').addEventListener('click', async ()=>{
+      const sid = subjSel.value; if(!sid){ alert('Select a subject first.'); return; }
+      const f = document.getElementById('csvFile').files[0];
+      if(!f){ alert('Choose a CSV file'); return; }
+      // Quick preview of first 5 rows
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const text = reader.result || '';
+        const lines = text.split(/\r?\n/).filter(Boolean);
+        const preview = lines.slice(0,6).join('\n');
+        if(!confirm('Preview (first lines):\n' + preview + '\n\nProceed to upload?')) return;
+        const form = new FormData(); form.append('file', f);
+        try{
+          const res = await fetch(`/api/coordinator/subjects/${sid}/enrollments/upload`, { method:'POST', body: form });
+          if(!res.ok){ alert('Upload failed'); return; }
+          const data = await res.json();
+          alert(`Uploaded. Added: ${data.added}, Skipped: ${data.skipped}`);
+          loadEnrollments(sid);
+        }catch(e){ alert('Upload failed'); }
+      };
+      reader.readAsText(f);
+    });
+
+    // Export CSV
+    document.getElementById('exportCsv').addEventListener('click', ()=>{
+      const sid = subjSel.value; if(!sid){ return; }
+      const q = (searchInput.value || '').toLowerCase();
+      const status = statusFilter.value;
+      const filtered = rowsCache.filter(r=> {
+        const match = (r.name + ' ' + r.email).toLowerCase().includes(q);
+        const statusMatch = !status || r.status === status;
+        return match && statusMatch;
+      });
+      if(filtered.length===0){ alert('No data to export'); return; }
+      let csv = 'name,email,status,enrolled_at\n';
+      filtered.forEach(r=>{
+        csv += `"${r.name}","${r.email}","${r.status||''}","${r.enrolled_at||''}"\n`;
+      });
+      const blob = new Blob([csv], { type:'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'enrollments_export.csv'; a.click();
+      URL.revokeObjectURL(url);
+    });
+  </script>
+{% endblock %}

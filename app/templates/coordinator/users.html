@@ -1,0 +1,56 @@
+{% extends 'coordinator_base.html' %}
+{% set active_section = 'users' %}
+{% block title %}User Management{% endblock %}
+{% block coordinator_content %}
+  <div class="header">
+    <div class="title">User Management</div>
+    <div class="user">
+      <div class="avatar">{{ (current_user.name.split()[0][0] + (current_user.name.split()[1][0] if current_user.name.split()|length>1 else ''))|upper }}</div>
+      <div>
+        <div style="font-weight:800">{{ current_user.name }}</div>
+        <div style="color:var(--muted);font-size:13px">UG Coordinator</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="search-row">
+    <input class="search" id="searchInput" placeholder="Search by name or email..." />
+    <button class="btn" id="addUserBtn">Add New User</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Name</th><th>Role</th><th>Department</th><th>Action</th></tr>
+      </thead>
+      <tbody id="userTable">
+        {% for u in users %}
+          <tr>
+            <td>{{ u.name }}<br><small style="color:var(--muted)">{{ u.email }}</small></td>
+            <td>{{ u.role|capitalize }}</td>
+            <td>{{ u.department or '—' }}</td>
+            <td style="color:var(--accent);font-weight:700">Edit / Delete</td>
+          </tr>
+        {% endfor %}
+        {% if users|length == 0 %}
+          <tr><td colspan="4" style="text-align:center;padding:18px;">No users found.</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const input = document.getElementById('searchInput');
+    input.addEventListener('input', ()=> {
+      const q = input.value.toLowerCase();
+      const rows = document.querySelectorAll('#userTable tr');
+      rows.forEach(r=>{
+        r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none';
+      });
+    });
+
+    document.getElementById('addUserBtn').addEventListener('click', ()=>{
+      alert('Open Add User modal (demo).');
+    });
+  </script>
+{% endblock %}

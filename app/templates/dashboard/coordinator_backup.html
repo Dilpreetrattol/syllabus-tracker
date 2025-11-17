@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Coordinator Dashboard{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/coordinator-dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="coordinator-dashboard">
+    <div class="dashboard-header">
+        <h1>Institution Overview</h1>
+        <p>Academic Coordinator - Multi-Department Management</p>
+    </div>
+
+    <div class="overview-grid">
+        <div class="overview-card" style="border-top-color: #3B82F6;">
+            <h3>Total Departments</h3>
+            <p class="overview-value">5</p>
+        </div>
+        <div class="overview-card" style="border-top-color: #10B981;">
+            <h3>Total Faculty</h3>
+            <p class="overview-value">48</p>
+        </div>
+        <div class="overview-card" style="border-top-color: #F59E0B;">
+            <h3>Total Students</h3>
+            <p class="overview-value">1,850</p>
+        </div>
+        <div class="overview-card">
+            <h3>Active Courses</h3>
+            <p class="overview-value">120</p>
+        </div>
+    </div>
+
+    <div class="dashboard-section">
+        <h2 style="margin-bottom: 1.5rem; color: var(--coord-text); font-size: 1.5rem; font-weight: 600;">Departments</h2>
+        <div class="department-grid">
+            <div class="dept-card">
+                <h3 class="dept-name">Computer Science</h3>
+                <p style="font-size: 0.875rem; color: var(--coord-text-light); margin: 0;">CSE Department</p>
+                <div class="dept-stats">
+                    <div class="stat-item">
+                        <div class="label">Faculty</div>
+                        <div class="value">12</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="label">Students</div>
+                        <div class="value">480</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="label">Progress</div>
+                        <div class="value">68%</div>
+                    </div>
+                </div>
+                <a href="#" class="btn-manage-dept">Manage Department</a>
+            </div>
+            
+            <div class="dept-card" style="border-left-color: #10B981;">
+                <h3 class="dept-name">Electronics & Communication</h3>
+                <p style="font-size: 0.875rem; color: var(--coord-text-light); margin: 0;">ECE Department</p>
+                <div class="dept-stats">
+                    <div class="stat-item">
+                        <div class="label">Faculty</div>
+                        <div class="value">10</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="label">Students</div>
+                        <div class="value">360</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="label">Progress</div>
+                        <div class="value">72%</div>
+                    </div>
+                </div>
+                <a href="#" class="btn-manage-dept" style="background: #10B981;">Manage Department</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-section" style="margin-top: 2rem;">
+        <h2 style="margin-bottom: 1.5rem; color: var(--coord-text); font-size: 1.5rem; font-weight: 600;">User Management</h2>
+        <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: var(--coord-shadow);">
+            <p style="color: var(--coord-text-light); text-align: center;">User management interface coming soon...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

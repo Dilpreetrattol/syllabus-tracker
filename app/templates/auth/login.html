@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glassmorphism Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/auth-glass.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+      body { background-image: url('{{ url_for('static', filename='images/common/login background.jpg') }}'); }
+    </style>
+  </head>
+  <body>
+    <div class="login-container">
+        <div class="logo">ti</div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form class="login-form" method="POST" action="" novalidate>
+            {{ form.hidden_tag() }}
+            <h2>LOGIN</h2>
+            
+            <div class="input-group">
+                {{ form.email(placeholder='Email', id='email') }}
+                <i class="fas fa-user"></i>
+                {% for error in form.email.errors %}
+                  <span class="error">{{ error }}</span>
+                {% endfor %}
+            </div>
+            
+            <div class="input-group">
+                {{ form.password(placeholder='Password', id='password') }}
+                <i class="fas fa-lock"></i>
+                {% for error in form.password.errors %}
+                  <span class="error">{{ error }}</span>
+                {% endfor %}
+            </div>
+            
+            <div style="text-align:left; margin-top:8px;">
+              {{ form.remember_me(id='remember') }} {{ form.remember_me.label(for='remember') }}
+            </div>
+            
+            <button type="submit" class="login-button">LOGIN</button>
+        </form>
+    </div>
+  </body>
+  </html>

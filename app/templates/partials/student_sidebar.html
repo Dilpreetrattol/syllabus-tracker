@@ -1,0 +1,11 @@
+<aside class="sidebar">
+  <div class="brand">ti</div>
+  <a class="nav-item {% if active_section=='dashboard' %}active{% endif %}" href="{{ url_for('dashboard.student') }}">
+    <span>🏫</span><div>Dashboard</div>
+  </a>
+  <a class="nav-item {% if active_section=='subjects' %}active{% endif %}" href="{{ url_for('student.subjects') }}">
+    <span>📚</span><div>Subjects</div>
+  </a>
+  <a class="nav-item {% if active_section=='schedule' %}active{% endif %}" href="#"><span>📅</span><div>Schedule</div></a>
+  <a class="logout" href="{{ url_for('auth.logout') }}">Logout</a>
+</aside>

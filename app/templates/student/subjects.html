@@ -1,0 +1,41 @@
+{% extends 'student_base.html' %}
+{% block title %}My Subjects{% endblock %}
+{% block student_content %}
+<div class="student-portal subjects-view">
+  <div class="header">
+    <h1>Your Subjects</h1>
+    <p class="subtitle">All subjects you're enrolled in with progress and faculty.</p>
+  </div>
+  <div class="subjects-table-wrapper glass-panel">
+    <table class="subjects-table">
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Subject Name</th>
+          <th>Faculty</th>
+          <th>Progress</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in subjects %}
+        <tr>
+          <td>{{ item.subject.code }}</td>
+          <td>{{ item.subject.name }}</td>
+          <td>{{ item.teacher.name if item.teacher else 'Unknown' }}</td>
+          <td>
+            <div class="progress-mini">
+              <div class="bar">
+                <div class="fill" style="width: {{ item.progress_percent }}%"></div>
+              </div>
+              <span class="value">{{ item.progress_percent }}%</span>
+            </div>
+          </td>
+          <td><a href="{{ url_for('student.subject_detail', subject_id=item.subject.id) }}" class="detail-link">View</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

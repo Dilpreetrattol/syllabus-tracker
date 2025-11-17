@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/student-portal.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="student-portal">
+  <div class="app">
+    {% include 'partials/student_sidebar.html' %}
+    <div class="main-panel">
+      {% block student_content %}{% endblock %}
+    </div>
+  </div>
+</div>
+{% endblock %}

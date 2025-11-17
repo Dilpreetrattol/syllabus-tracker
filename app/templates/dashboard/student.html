@@ -1,0 +1,54 @@
+{% extends 'student_base.html' %}
+{% set active_section = 'dashboard' %}
+
+{% block title %}Student Dashboard{% endblock %}
+
+{% block student_content %}
+{% set avg_progress = average_progress %}
+
+<div class="hero">
+    <div>
+        <div style="font-size:14px;opacity:0.85">{{ current_date }}</div>
+        <div style="font-size:30px;font-weight:800">Welcome back, {{ current_user.name.split(' ')[0] }}!</div>
+        <div style="opacity:0.9;margin-top:6px">Always stay updated in your student portal</div>
+    </div>
+    <div style="width:210px;height:120px;border-radius:120px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;font-size:44px;">
+        🎓
+    </div>
+</div>
+
+<section style="display:flex;gap:36px;align-items:flex-start;flex-wrap:wrap;">
+    <div style="flex:1;min-width:300px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <div class="h2">Enrolled Courses</div>
+            <a class="accent-link" href="{{ url_for('student.subjects') }}">See all</a>
+        </div>
+
+        {% if subject_preview %}
+            <div class="courses">
+                {% for item in subject_preview %}
+                <a href="{{ url_for('student.subject_detail', subject_id=item.subject.id) }}" class="course-card card" style="text-decoration:none;color:inherit;">
+                    <div style="font-weight:700;font-size:18px">{{ item.subject.name }}</div>
+                    <div style="margin-top:10px;font-size:12px;opacity:.7;">Code: {{ item.subject.code }}</div>
+                    <div style="margin-top:14px;">
+                        <div style="height:8px;background:rgba(255,255,255,0.25);border-radius:4px;overflow:hidden;">
+                            <div style="height:100%;background:var(--sp-accent1);width:{{ item.progress_percent }}%;transition:width .4s;"></div>
+                        </div>
+                        <div style="font-size:12px;opacity:.75;margin-top:6px;">{{ item.progress_percent }}% complete</div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="card" style="min-height:150px;display:flex;align-items:center;justify-content:center;">No courses enrolled yet.</div>
+        {% endif %}
+    </div>
+
+    <div style="width:260px;display:flex;flex-direction:column;align-items:center;gap:12px;">
+        <div class="h2" style="width:100%;">Syllabus completed</div>
+        <div class="progress-circle">{{ avg_progress }}%</div>
+        <div style="font-size:12px;opacity:.7;text-align:center;">Average across all enrolled subjects.</div>
+    </div>
+</section>
+
+{% endblock %}
