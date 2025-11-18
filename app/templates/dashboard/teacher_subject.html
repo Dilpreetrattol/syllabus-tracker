@@ -12,11 +12,11 @@
     <div style="color:var(--t-muted);margin-top:6px;font-weight:600;">Enrolled Students: {{ enroll_count }}</div>
     <div style="margin-top:10px;font-size:14px;color:var(--t-muted);">Progress: <strong>{{ progress_percent }}%</strong> ({{ topics|selectattr('is_completed')|list|length }}/{{ topics|length }} topics)</div>
     <div class="tab-buttons" style="margin-top:18px;display:flex;gap:14px;">
-      <div class="tab active">Syllabus & Progress</div>
-      <div class="tab">Students</div>
-      <div class="tab">Reports</div>
+      <button class="tab active" data-target="#tab-syllabus" style="all:unset;background:linear-gradient(180deg,#e64b49,#d33a3a);color:#fff;padding:8px 12px;border-radius:10px;cursor:pointer;transition:all 0.2s;font-weight:700;box-shadow:0 4px 12px rgba(227,66,64,0.3);">Syllabus & Progress</button>
+      <button class="tab" data-target="#tab-students" style="all:unset;background:rgba(0,0,0,0.04);padding:8px 12px;border-radius:10px;cursor:pointer;transition:all 0.2s;font-weight:500;">Students</button>
+      <button class="tab" data-target="#tab-reports" style="all:unset;background:rgba(0,0,0,0.04);padding:8px 12px;border-radius:10px;cursor:pointer;transition:all 0.2s;font-weight:500;">Reports</button>
     </div>
-    <div class="syllabus-wrap">
+    <div id="tab-syllabus" class="syllabus-wrap tab-panel" style="margin-top:8px;">
       <div style="display:flex;align-items:center;gap:12px;font-weight:800;color:var(--t-muted);padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.04);margin-bottom:12px;">
         <div style="width:40px">#</div>
         <div style="flex:1">Topic</div>
@@ -41,6 +41,35 @@
       </div>
       {% endfor %}
     </div>
+
+    <div id="tab-students" class="tab-panel" style="display:none;margin-top:8px;">
+      {% if enrollments and enrollments|length > 0 %}
+      <div style="display:flex;align-items:center;gap:12px;font-weight:800;color:var(--t-muted);padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.04);margin-bottom:12px;">
+        <div style="flex:1">Student</div>
+        <div style="width:220px">Email</div>
+        <div style="width:160px">Enrolled At</div>
+      </div>
+      {% for e in enrollments %}
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 8px;border-bottom:1px solid rgba(0,0,0,0.04);">
+        <div style="flex:1;font-weight:600;">{{ e.student.name }}</div>
+        <div style="width:220px;color:var(--t-muted);">{{ e.student.email }}</div>
+        <div style="width:160px;color:var(--t-muted);">{{ e.enrolled_at.strftime('%Y-%m-%d') if e.enrolled_at else '-' }}</div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="card" style="padding:16px;">No students enrolled yet.</div>
+      {% endif %}
+    </div>
+
+    <div id="tab-reports" class="tab-panel" style="display:none;margin-top:8px;">
+      <div class="card" style="padding:16px;">
+        <div style="font-weight:700;margin-bottom:8px;">Progress Summary</div>
+        <div style="color:var(--t-muted);">Overall progress: <strong>{{ progress_percent }}%</strong>. Topics complete: {{ topics|selectattr('is_completed')|list|length }} / {{ topics|length }}.</div>
+        <div style="margin-top:12px;">
+          <button id="exportCsv" style="background:var(--t-accent);color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;">Download CSV Report</button>
+        </div>
+      </div>
+    </div>
   </div>
   <div style="width:260px;">
     <div class="mark-area">
@@ -51,6 +80,31 @@
   </div>
 </div>
 <script>
+// Tab switching
+document.querySelectorAll('.tab-buttons .tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab-buttons .tab').forEach(t => {
+      t.classList.remove('active');
+      t.style.background = 'rgba(0,0,0,0.04)';
+      t.style.fontWeight = '500';
+      t.style.color = '';
+    });
+    tab.classList.add('active');
+    tab.style.background = 'linear-gradient(180deg,#e64b49,#d33a3a)';
+    tab.style.fontWeight = '700';
+    tab.style.color = '#fff';
+    tab.style.boxShadow = '0 4px 12px rgba(227,66,64,0.3)';
+    document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+    const target = tab.getAttribute('data-target');
+    if (target) {
+      const el = document.querySelector(target);
+      if (el) el.style.display = '';
+    }
+  });
+});
+
+
+
 document.querySelectorAll('.mark-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const id = btn.dataset.id;
@@ -63,6 +117,28 @@ document.getElementById('bulkCover').addEventListener('click', ()=>{
   const seq = pending.reduce((p,btn)=> p.then(()=> fetch(`/dashboard/teacher/topic/${btn.dataset.id}/cover`, {method:'POST'}).then(r=>r.json()).then(()=>{})), Promise.resolve());
   seq.then(()=> location.reload());
 });
+
+// CSV export for simple report
+const exportBtn = document.getElementById('exportCsv');
+if (exportBtn) {
+  exportBtn.addEventListener('click', () => {
+    const rows = [['Order','Topic','Completed']];
+    document.querySelectorAll('.syllabus-row').forEach(row => {
+      const order = row.querySelector('div').innerText.trim();
+      const name = row.querySelector('div:nth-child(2) > div').innerText.trim();
+      const completed = row.querySelector('span') ? 'Yes' : (row.querySelector('.mark-btn') ? 'No' : '');
+      rows.push([order, name, completed]);
+    });
+    const csv = rows.map(r => r.map(v => '"'+String(v).replaceAll('"','""')+'"').join(',')).join('\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '{{ subject.code }}_report.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+}
 </script>
 {% endif %}
 {% endblock %}

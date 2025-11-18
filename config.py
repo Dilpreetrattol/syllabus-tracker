@@ -19,3 +19,13 @@ class Config:
 
     # Feature flags
     ENABLE_CLAUDE_HAIKU_45 = os.environ.get('ENABLE_CLAUDE_HAIKU_45', 'false').lower() in ('1','true','yes','on')
+
+    # Email / SMTP settings (optional)
+    EMAIL_ENABLED = os.environ.get('EMAIL_ENABLED', 'false').lower() in ('1','true','yes','on')
+    EMAIL_SERVER = os.environ.get('EMAIL_SERVER', '')
+    EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'true').lower() in ('1','true','yes','on')
+    EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'false').lower() in ('1','true','yes','on')
+    EMAIL_USERNAME = os.environ.get('EMAIL_USERNAME', '')
+    EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD', '')
+    EMAIL_SENDER = os.environ.get('EMAIL_SENDER', os.environ.get('EMAIL_USERNAME', ''))

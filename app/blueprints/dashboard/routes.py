@@ -1,4 +1,4 @@
-from flask import render_template
+from flask import render_template, request, url_for, current_app
 from flask_login import login_required
 from app.blueprints.auth.decorators import role_required
 from . import dashboard_bp
@@ -79,7 +79,7 @@ def teacher():
 @login_required
 @role_required('teacher')
 def teacher_subject(subject_id):
-    from app.models import Subject, Topic, Enrollment
+    from app.models import Subject, Topic, Enrollment, User
     from flask_login import current_user
     from datetime import datetime
     try:
@@ -92,8 +92,17 @@ def teacher_subject(subject_id):
         total = len(topics)
         completed = sum(1 for t in topics if t.is_completed)
         progress_percent = round(completed / total * 100, 1) if total else 0
-        enroll_count = Enrollment.query.filter_by(subject_id=subject.id).count()
-        return render_template('dashboard/teacher_subject.html', subject=subject, topics=topics, progress_percent=progress_percent, enroll_count=enroll_count)
+        enroll_q = Enrollment.query.filter_by(subject_id=subject.id)
+        enroll_count = enroll_q.count()
+        enrollments = enroll_q.all()
+        return render_template(
+            'dashboard/teacher_subject.html',
+            subject=subject,
+            topics=topics,
+            progress_percent=progress_percent,
+            enroll_count=enroll_count,
+            enrollments=enrollments,
+        )
     except Exception as e:
         return render_template('dashboard/teacher_subject.html', error=f'Error loading subject: {str(e)}'), 500
 
@@ -220,6 +229,7 @@ def coordinator():
     return render_template('dashboard/coordinator.html', metrics=metrics, recent_activity=recent_activity, active_section='dashboard')
 
 
+
 @dashboard_bp.route('/coordinator/users')
 @login_required
 @role_required('coordinator')
@@ -227,6 +237,120 @@ def coordinator_users():
     from app.models import User
     users = User.query.order_by(User.name.asc()).all()
     return render_template('coordinator/users.html', users=users, active_section='users')
+
+# Create user (AJAX)
+@dashboard_bp.route('/coordinator/users/create', methods=['POST'])
+@login_required
+@role_required('coordinator')
+def coordinator_create_user():
+    from app.models import User
+    from app import db
+    import json, secrets
+    data = (json.loads(request.data) if request.is_json else request.form)
+    name = data.get('name', '').strip()
+    email = data.get('email', '').strip()
+    role = data.get('role', '').strip()
+    department = data.get('department', '').strip() or None
+    password = data.get('password') or ("Init-" + secrets.token_hex(4))
+    if not name or not email or not role:
+        return {'status':'error','message':'Name, email and role are required.'}, 400
+    # Check email uniqueness
+    if User.query.filter_by(email=email).first():
+        return {'status':'error','message':'Email already exists.'}, 400
+    u = User(name=name, email=email, role=role, department=department, is_active=True)
+    u.set_password(password)
+    try:
+        db.session.add(u)
+        db.session.commit()
+        # Send invite/reset email if email config allows
+        try:
+            from itsdangerous import URLSafeTimedSerializer
+            from app.services.email import send_email
+            s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+            token = s.dumps({'email': u.email}, salt='password-reset')
+            reset_url = url_for('auth.reset_password', token=token, _external=True)
+            current_app.logger.info(f"Invite/reset link for {u.email}: {reset_url}")
+            send_email(
+                to_email=u.email,
+                subject="Welcome to Syllabus Tracker",
+                body_text=f"Hello {u.name},\n\nYour account has been created. Set your password here: {reset_url}\nThe link expires in 1 hour.",
+                body_html=f"""
+                    <p>Hello {u.name},</p>
+                    <p>Your account has been created. <a href='{reset_url}'>Click here to set your password</a>.</p>
+                    <p>This link expires in 1 hour.</p>
+                """
+            )
+        except Exception:
+            pass
+        return {'status':'ok','user':{
+            'id': u.id,
+            'name': u.name,
+            'email': u.email,
+            'role': u.role,
+            'department': u.department
+        }}
+    except Exception as e:
+        db.session.rollback()
+        return {'status':'error','message': str(e)}, 400
+
+# Edit user (AJAX)
+@dashboard_bp.route('/coordinator/users/<int:user_id>/edit', methods=['POST'])
+@login_required
+@role_required('coordinator')
+def coordinator_edit_user(user_id):
+    from app.models import User
+    from app import db
+    import json
+    data = (json.loads(request.data) if request.is_json else request.form)
+    user = User.query.get_or_404(user_id)
+    user.name = data.get('name', user.name)
+    user.email = data.get('email', user.email)
+    user.role = data.get('role', user.role)
+    user.department = data.get('department', user.department)
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return {'status': 'error', 'message': str(e)}, 400
+    return {'status': 'ok', 'user': {
+        'id': user.id,
+        'name': user.name,
+        'email': user.email,
+        'role': user.role,
+        'department': user.department
+    }}
+
+# Delete user (AJAX)
+@dashboard_bp.route('/coordinator/users/<int:user_id>/delete', methods=['DELETE'])
+@login_required
+@role_required('coordinator')
+def coordinator_delete_user(user_id):
+    from app.models import User
+    from app import db
+    user = User.query.get_or_404(user_id)
+    try:
+        user.is_active = False
+        db.session.commit()
+        return {'status': 'ok', 'deactivated': user_id}
+    except Exception as e:
+        db.session.rollback()
+        return {'status': 'error', 'message': str(e)}, 400
+
+# Restore user (AJAX)
+@dashboard_bp.route('/coordinator/users/<int:user_id>/restore', methods=['POST'])
+@login_required
+@role_required('coordinator')
+def coordinator_restore_user(user_id):
+    from app.models import User
+    from app import db
+    user = User.query.get_or_404(user_id)
+    try:
+        user.is_active = True
+        db.session.commit()
+        return {'status': 'ok', 'restored': user_id}
+    except Exception as e:
+        db.session.rollback()
+        return {'status': 'error', 'message': str(e)}, 400
 
 
 @dashboard_bp.route('/coordinator/subjects')

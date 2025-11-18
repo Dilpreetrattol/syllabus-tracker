@@ -15,6 +15,7 @@
 
   <div class="search-row">
     <input class="search" id="searchInput" placeholder="Search by name or email..." />
+    <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:var(--muted);"><input type="checkbox" id="toggleInactive"> Show inactive</label>
     <button class="btn" id="addUserBtn">Add New User</button>
   </div>
 
@@ -25,11 +26,18 @@
       </thead>
       <tbody id="userTable">
         {% for u in users %}
-          <tr>
-            <td>{{ u.name }}<br><small style="color:var(--muted)">{{ u.email }}</small></td>
+          <tr data-id="{{ u.id }}" data-active="{{ 'true' if u.is_active else 'false' }}" class="{% if not u.is_active %}inactive{% endif %}">
+            <td>{{ u.name }}{% if not u.is_active %} <span class="badge" style="background:#ddd;color:#555;margin-left:6px;">Inactive</span>{% endif %}<br><small style="color:var(--muted)">{{ u.email }}</small></td>
             <td>{{ u.role|capitalize }}</td>
             <td>{{ u.department or '—' }}</td>
-            <td style="color:var(--accent);font-weight:700">Edit / Delete</td>
+            <td>
+              <button class="btn edit-user-btn" style="background:#6b7280" data-id="{{ u.id }}" data-name="{{ u.name }}" data-email="{{ u.email }}" data-role="{{ u.role }}" data-department="{{ u.department }}">Edit</button>
+              {% if u.is_active %}
+                <button class="btn delete-user-btn" style="background:#ef4444" data-id="{{ u.id }}" data-name="{{ u.name }}">Deactivate</button>
+              {% else %}
+                <button class="btn restore-user-btn" style="background:#10b981" data-id="{{ u.id }}" data-name="{{ u.name }}">Restore</button>
+              {% endif %}
+            </td>
           </tr>
         {% endfor %}
         {% if users|length == 0 %}
@@ -37,6 +45,87 @@
         {% endif %}
       </tbody>
     </table>
+  </div>
+
+  <!-- Edit User Modal -->
+  <div id="editUserModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.18);z-index:2000;align-items:center;justify-content:center;">
+    <form id="editUserForm" style="background:#fff;padding:32px 28px;border-radius:18px;min-width:320px;max-width:98vw;box-shadow:0 8px 32px rgba(0,0,0,0.18);display:flex;flex-direction:column;gap:18px;">
+      <div style="font-weight:700;font-size:20px;margin-bottom:8px;">Edit User</div>
+      <input type="hidden" name="id" id="editUserId">
+      <div>
+        <label>Name</label>
+        <input class="form-control" name="name" id="editUserName" required>
+      </div>
+      <div>
+        <label>Email</label>
+        <input class="form-control" name="email" id="editUserEmail" required>
+      </div>
+      <div>
+        <label>Role</label>
+        <select class="form-control" name="role" id="editUserRole" required>
+          <option value="student">Student</option>
+          <option value="teacher">Teacher</option>
+          <option value="hod">HOD</option>
+          <option value="coordinator">Coordinator</option>
+        </select>
+      </div>
+      <div>
+        <label>Department</label>
+        <input class="form-control" name="department" id="editUserDepartment">
+      </div>
+      <div style="display:flex;gap:12px;justify-content:flex-end;">
+        <button type="button" class="btn btn-secondary" id="cancelEditUser">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Delete User Modal -->
+  <div id="deleteUserModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.18);z-index:2000;align-items:center;justify-content:center;">
+    <div style="background:#fff;padding:28px 24px;border-radius:16px;min-width:300px;max-width:98vw;box-shadow:0 8px 32px rgba(0,0,0,0.18);display:flex;flex-direction:column;gap:18px;align-items:center;">
+      <div style="font-weight:700;font-size:18px;">Delete User</div>
+      <div id="deleteUserText" style="color:#b00;font-size:15px;text-align:center;"></div>
+      <div style="display:flex;gap:12px;justify-content:center;">
+        <button type="button" class="btn btn-secondary" id="cancelDeleteUser">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteUser">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create User Modal -->
+  <div id="createUserModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.18);z-index:2000;align-items:center;justify-content:center;">
+    <form id="createUserForm" style="background:#fff;padding:32px 28px;border-radius:18px;min-width:320px;max-width:98vw;box-shadow:0 8px 32px rgba(0,0,0,0.18);display:flex;flex-direction:column;gap:18px;">
+      <div style="font-weight:700;font-size:20px;margin-bottom:8px;">Add New User</div>
+      <div>
+        <label>Name</label>
+        <input class="form-control" name="name" id="createUserName" required>
+      </div>
+      <div>
+        <label>Email</label>
+        <input class="form-control" name="email" id="createUserEmail" required>
+      </div>
+      <div>
+        <label>Role</label>
+        <select class="form-control" name="role" id="createUserRole" required>
+          <option value="student">Student</option>
+          <option value="teacher">Teacher</option>
+          <option value="hod">HOD</option>
+          <option value="coordinator">Coordinator</option>
+        </select>
+      </div>
+      <div>
+        <label>Department</label>
+        <input class="form-control" name="department" id="createUserDepartment">
+      </div>
+      <div>
+        <label>Password <span style="color:var(--muted);font-size:12px">(optional; default generated)</span></label>
+        <input class="form-control" name="password" id="createUserPassword" placeholder="Leave blank to auto-generate">
+      </div>
+      <div style="display:flex;gap:12px;justify-content:flex-end;">
+        <button type="button" class="btn btn-secondary" id="cancelCreateUser">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create</button>
+      </div>
+    </form>
   </div>
 
   <script>
@@ -49,8 +138,218 @@
       });
     });
 
+    // Open create modal
+    const createUserModal = document.getElementById('createUserModal');
+    const createUserForm = document.getElementById('createUserForm');
     document.getElementById('addUserBtn').addEventListener('click', ()=>{
-      alert('Open Add User modal (demo).');
+      createUserForm.reset();
+      createUserModal.style.display = 'flex';
+    });
+    document.getElementById('cancelCreateUser').onclick = () => { createUserModal.style.display = 'none'; };
+    createUserModal.onclick = (e) => { if(e.target === createUserModal) createUserModal.style.display = 'none'; };
+
+    // Edit User Modal logic
+    const editUserModal = document.getElementById('editUserModal');
+    const editUserForm = document.getElementById('editUserForm');
+    document.querySelectorAll('.edit-user-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById('editUserId').value = btn.dataset.id;
+        document.getElementById('editUserName').value = btn.dataset.name;
+        document.getElementById('editUserEmail').value = btn.dataset.email;
+        document.getElementById('editUserRole').value = btn.dataset.role;
+        document.getElementById('editUserDepartment').value = btn.dataset.department || '';
+        editUserModal.style.display = 'flex';
+      });
+    });
+    document.getElementById('cancelEditUser').onclick = () => { editUserModal.style.display = 'none'; };
+    editUserModal.onclick = (e) => { if(e.target === editUserModal) editUserModal.style.display = 'none'; };
+
+    // Delete User Modal logic
+    const deleteUserModal = document.getElementById('deleteUserModal');
+    let deleteUserId = null;
+    document.querySelectorAll('.delete-user-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        deleteUserId = btn.dataset.id;
+        document.getElementById('deleteUserText').textContent = `Are you sure you want to delete user "${btn.dataset.name}"? This cannot be undone.`;
+        deleteUserModal.style.display = 'flex';
+      });
+    });
+    document.getElementById('cancelDeleteUser').onclick = () => { deleteUserModal.style.display = 'none'; };
+    deleteUserModal.onclick = (e) => { if(e.target === deleteUserModal) deleteUserModal.style.display = 'none'; };
+
+    // Submit edit via AJAX
+    editUserForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const id = document.getElementById('editUserId').value;
+      const payload = {
+        name: document.getElementById('editUserName').value,
+        email: document.getElementById('editUserEmail').value,
+        role: document.getElementById('editUserRole').value,
+        department: document.getElementById('editUserDepartment').value
+      };
+      fetch(`/dashboard/coordinator/users/${id}/edit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(r => r.json()).then(res => {
+        if(res.status === 'ok'){
+          const row = document.querySelector(`#userTable tr[data-id='${id}']`);
+          if(row){
+            const cells = row.querySelectorAll('td');
+            cells[0].innerHTML = `${res.user.name}<br><small style="color:var(--muted)">${res.user.email}</small>`;
+            cells[1].textContent = res.user.role.charAt(0).toUpperCase() + res.user.role.slice(1);
+            cells[2].textContent = res.user.department || '—';
+            // update button datasets
+            const editBtn = row.querySelector('.edit-user-btn');
+            editBtn.dataset.name = res.user.name;
+            editBtn.dataset.email = res.user.email;
+            editBtn.dataset.role = res.user.role;
+            editBtn.dataset.department = res.user.department || '';
+          }
+          editUserModal.style.display = 'none';
+        } else {
+          alert('Failed to update user');
+        }
+      }).catch(()=> alert('Error saving user'));
+    });
+
+    // Confirm deactivate via AJAX (soft delete)
+    document.getElementById('confirmDeleteUser').addEventListener('click', () => {
+      if(!deleteUserId) return;
+      fetch(`/dashboard/coordinator/users/${deleteUserId}/delete`, { method: 'DELETE' })
+        .then(r => r.json())
+        .then(res => {
+          if(res.status === 'ok'){
+            const row = document.querySelector(`#userTable tr[data-id='${deleteUserId}']`);
+            if(row){
+              row.dataset.active = 'false';
+              row.classList.add('inactive');
+              const cells = row.querySelectorAll('td');
+              if(cells[0] && !cells[0].querySelector('.badge')){
+                const badge = document.createElement('span');
+                badge.className = 'badge';
+                badge.style.background = '#ddd';
+                badge.style.color = '#555';
+                badge.style.marginLeft = '6px';
+                badge.textContent = 'Inactive';
+                cells[0].insertBefore(badge, cells[0].querySelector('small'));
+              }
+              // Swap button to Restore
+              const actionCell = cells[3];
+              actionCell.innerHTML = `
+                <button class="btn edit-user-btn" style="background:#6b7280" data-id="${deleteUserId}" data-name="${cells[0].childNodes[0].textContent.trim()}" data-email="${cells[0].querySelector('small').textContent}" data-role="${cells[1].textContent.trim().toLowerCase()}" data-department="${cells[2].textContent.trim()==='—'?'':cells[2].textContent.trim()}">Edit</button>
+                <button class=\"btn restore-user-btn\" style=\"background:#10b981\" data-id=\"${deleteUserId}\">Restore</button>`;
+              attachRowHandlers(row);
+              // Apply inactive filter
+              const toggle = document.getElementById('toggleInactive');
+              if(toggle && !toggle.checked){ row.style.display = 'none'; }
+            }
+            deleteUserModal.style.display = 'none';
+          } else {
+            alert('Failed to deactivate user');
+          }
+        }).catch(()=> alert('Error deactivating user'));
+    });
+
+    function attachRowHandlers(row){
+      const editBtn = row.querySelector('.edit-user-btn');
+      if(editBtn && !editBtn._bound){
+        editBtn._bound = true;
+        editBtn.addEventListener('click', () => {
+          document.getElementById('editUserId').value = editBtn.dataset.id;
+          document.getElementById('editUserName').value = editBtn.dataset.name;
+          document.getElementById('editUserEmail').value = editBtn.dataset.email;
+          document.getElementById('editUserRole').value = editBtn.dataset.role;
+          document.getElementById('editUserDepartment').value = editBtn.dataset.department || '';
+          editUserModal.style.display = 'flex';
+        });
+      }
+      const delBtn = row.querySelector('.delete-user-btn');
+      if(delBtn && !delBtn._bound){
+        delBtn._bound = true;
+        delBtn.addEventListener('click', () => {
+          deleteUserId = delBtn.dataset.id;
+          document.getElementById('deleteUserText').textContent = `Are you sure you want to delete user "${delBtn.dataset.name}"? This cannot be undone.`;
+          deleteUserModal.style.display = 'flex';
+        });
+      }
+      const restoreBtn = row.querySelector('.restore-user-btn');
+      if(restoreBtn && !restoreBtn._bound){
+        restoreBtn._bound = true;
+        restoreBtn.addEventListener('click', () => {
+          const id = restoreBtn.dataset.id;
+          fetch(`/dashboard/coordinator/users/${id}/restore`, { method:'POST' })
+            .then(r=>r.json()).then(res=>{
+              if(res.status==='ok'){
+                row.dataset.active = 'true';
+                row.classList.remove('inactive');
+                const cells = row.querySelectorAll('td');
+                const badge = row.querySelector('.badge');
+                if(badge) badge.remove();
+                const actionCell = cells[3];
+                actionCell.innerHTML = `
+                  <button class=\"btn edit-user-btn\" style=\"background:#6b7280\" data-id=\"${id}\" data-name=\"${cells[0].childNodes[0].textContent.trim()}\" data-email=\"${cells[0].querySelector('small').textContent}\" data-role=\"${cells[1].textContent.trim().toLowerCase()}\" data-department=\"${cells[2].textContent.trim()==='—'?'':cells[2].textContent.trim()}\">Edit</button>
+                  <button class=\"btn delete-user-btn\" style=\"background:#ef4444\" data-id=\"${id}\" data-name=\"${cells[0].childNodes[0].textContent.trim()}\">Deactivate</button>`;
+                attachRowHandlers(row);
+              } else {
+                alert('Failed to restore user');
+              }
+            }).catch(()=> alert('Error restoring user'));
+        });
+      }
+    }
+
+    // Attach to existing rows on load
+    document.querySelectorAll('#userTable tr').forEach(attachRowHandlers);
+
+    // Inactive toggle filter
+    const toggleInactive = document.getElementById('toggleInactive');
+    function applyInactiveFilter(){
+      const show = toggleInactive.checked;
+      document.querySelectorAll('#userTable tr').forEach(r=>{
+        const active = r.dataset.active !== 'false';
+        if(!show && !active){ r.style.display = 'none'; } else { r.style.display = ''; }
+      });
+    }
+    toggleInactive.addEventListener('change', applyInactiveFilter);
+    applyInactiveFilter();
+
+    // Create user submit via AJAX
+    createUserForm.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const payload = {
+        name: document.getElementById('createUserName').value,
+        email: document.getElementById('createUserEmail').value,
+        role: document.getElementById('createUserRole').value,
+        department: document.getElementById('createUserDepartment').value,
+        password: document.getElementById('createUserPassword').value
+      };
+      fetch('/dashboard/coordinator/users/create', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      }).then(r=>r.json()).then(res=>{
+        if(res.status==='ok'){
+          // Insert a new row at the top
+          const tbody = document.getElementById('userTable');
+          const tr = document.createElement('tr');
+          tr.setAttribute('data-id', res.user.id);
+          tr.setAttribute('data-active', 'true');
+          tr.innerHTML = `
+            <td>${res.user.name}<br><small style="color:var(--muted)">${res.user.email}</small></td>
+            <td>${res.user.role.charAt(0).toUpperCase()+res.user.role.slice(1)}</td>
+            <td>${res.user.department || '—'}</td>
+            <td>
+              <button class="btn edit-user-btn" style="background:#6b7280" data-id="${res.user.id}" data-name="${res.user.name}" data-email="${res.user.email}" data-role="${res.user.role}" data-department="${res.user.department || ''}">Edit</button>
+              <button class="btn delete-user-btn" style="background:#ef4444" data-id="${res.user.id}" data-name="${res.user.name}">Deactivate</button>
+            </td>`;
+          tbody.prepend(tr);
+          attachRowHandlers(tr);
+          createUserModal.style.display = 'none';
+        } else {
+          alert(res.message || 'Failed to create user');
+        }
+      }).catch(()=> alert('Error creating user'));
     });
   </script>
 {% endblock %}
