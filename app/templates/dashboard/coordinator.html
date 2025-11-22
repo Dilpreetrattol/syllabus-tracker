@@ -1,53 +1,61 @@
 {% extends 'coordinator_base.html' %}
 {% set active_section = 'dashboard' %}
-{% block title %}Admin Overview{% endblock %}
+{% block title %}Coordinator Dashboard{% endblock %}
 {% block coordinator_content %}
-    <div class="header">
+    <div class="hero">
         <div>
-            <div class="badge">Admin Overview</div>
-            <div style="margin-top:12px;font-size:20px;font-weight:800">System Stats</div>
+            <h1 class="h1">Coordinator Dashboard</h1>
+            <p style="margin:0; opacity:0.9;">Manage university academics and faculty</p>
         </div>
-        <div class="user">
-            <div class="avatar">{{ (current_user.name.split()[0][0] + (current_user.name.split()[1][0] if current_user.name.split()|length>1 else ''))|upper }}</div>
-            <div>
-                <div style="font-weight:800">{{ current_user.name }}</div>
-                <div style="color:var(--muted);font-size:13px">UG Coordinator</div>
-            </div>
+        <div class="avatar">{{ (current_user.name.split()[0][0] + (current_user.name.split()[1][0] if current_user.name.split()|length>1 else ''))|upper }}</div>
+    </div>
+
+    <div class="stats">
+        <div class="stat">
+            <div class="label">Total Users</div>
+            <div class="num">{{ metrics.total_users }}</div>
+        </div>
+        <div class="stat">
+            <div class="label">Active Subjects</div>
+            <div class="num">{{ metrics.active_subjects }}</div>
+        </div>
+        <div class="stat">
+            <div class="label">Unassigned Teachers</div>
+            <div class="num">{{ metrics.unassigned_teachers }}</div>
         </div>
     </div>
 
-    <div style="display:flex;gap:24px;align-items:flex-start;">
-        <div style="flex:1">
-            <div class="stats">
-                <div class="stat"><div style="color:var(--muted)">Total Users:</div><div class="num">{{ metrics.total_users }}</div></div>
-                <div class="stat"><div style="color:var(--muted)">Active Subjects:</div><div class="num">{{ metrics.active_subjects }}</div></div>
-                <div class="stat"><div style="color:var(--muted)">Unassigned Teachers:</div><div class="num">{{ metrics.unassigned_teachers }}</div></div>
-            </div>
+    <div class="quick-actions">
+        <a class="quick-action" href="{{ url_for('dashboard.coordinator_users') }}">
+            <div style="font-size:20px;margin-bottom:8px;">👥</div>
+            <div>Manage Users</div>
+        </a>
+        <a class="quick-action" href="{{ url_for('dashboard.coordinator_subjects') }}">
+            <div style="font-size:20px;margin-bottom:8px;">📚</div>
+            <div>Manage Subjects</div>
+        </a>
+        <a class="quick-action" href="{{ url_for('dashboard.coordinator_enrollments') }}">
+            <div style="font-size:20px;margin-bottom:8px;">📝</div>
+            <div>Enrollments</div>
+        </a>
+    </div>
 
-            <div style="display:flex;gap:18px;align-items:flex-start;">
-                <div style="flex:1">
-                    <div style="font-weight:800;margin-bottom:8px">Recent Activity Log</div>
-                    <div class="activity">
-                        {% if recent_activity %}
-                            {% for a in recent_activity %}
-                                <div style="color:#333;font-weight:700">{{ a.action or a.message or 'Activity' }}</div>
-                                <div style="color:var(--muted);font-size:13px;margin-top:6px">{{ a.timestamp.strftime('%b %d, %Y %I:%M %p') }}</div>
-                                {% if not loop.last %}<hr style="border:none;height:8px;background:transparent"/>{% endif %}
-                            {% endfor %}
-                        {% else %}
-                            <div style="color:#555">No recent activity.</div>
-                        {% endif %}
+    <div class="activity">
+        <h2 class="h2">Recent Activity</h2>
+        {% if recent_activity %}
+            {% for a in recent_activity %}
+                <div class="activity-item">
+                    <div class="icon">📝</div>
+                    <div style="flex:1;">
+                        <div style="font-weight:700;color:var(--cp-text)">{{ a.action or a.message or 'Activity' }}</div>
+                        <div class="muted" style="font-size:13px;margin-top:4px">{{ a.timestamp.strftime('%b %d, %Y %I:%M %p') }}</div>
                     </div>
                 </div>
-
-                <aside class="quick">
-                    <div style="font-weight:800;margin-bottom:10px">Quick Actions</div>
-                    <a class="btn" style="display:block;width:100%;margin-bottom:8px;text-align:center;text-decoration:none" href="{{ url_for('dashboard.coordinator_subjects') }}">Manage Subjects</a>
-                    <a class="btn" style="display:block;width:100%;background:#c44b49;margin-bottom:8px;text-align:center;text-decoration:none" href="{{ url_for('dashboard.coordinator_users') }}">Manage Users</a>
-                    <div style="font-size:13px;color:var(--muted);text-align:center">View Logs</div>
-                </aside>
+            {% endfor %}
+        {% else %}
+            <div class="card">
+                <p class="muted" style="text-align:center;margin:0;">No recent activity to display.</p>
             </div>
-
-        </div>
+        {% endif %}
     </div>
 {% endblock %}

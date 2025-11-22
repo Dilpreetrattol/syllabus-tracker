@@ -182,6 +182,49 @@ Invoke-WebRequest -UseBasicParsing http://127.0.0.1:5000/api/health
 - [ ] Set up CI/CD pipeline
 - [ ] Implement rate limiting and security hardening
 
+## 🚀 Deployment
+
+### Cloud Deployment Options
+
+#### 1. Heroku (Recommended for beginners)
+```bash
+# Install Heroku CLI, then:
+heroku create your-app-name
+heroku addons:create heroku-postgresql:hobby-dev
+heroku config:set SECRET_KEY=your-secure-secret-key
+git push heroku main
+```
+
+#### 2. Railway/Render (Modern platforms)
+1. Connect your GitHub repository
+2. Set environment variables:
+   - `SECRET_KEY`: Your secure secret key
+   - `DATABASE_URL`: PostgreSQL connection string (auto-provided)
+3. Deploy automatically on git push
+
+#### 3. Docker Deployment
+```bash
+docker build -t syllabus-tracker .
+docker run -p 8000:8000 \
+  -e SECRET_KEY=your-secret-key \
+  -e DATABASE_URL=postgresql://... \
+  syllabus-tracker
+```
+
+### Environment Variables
+
+Required for production:
+- `SECRET_KEY`: Secure secret key for sessions
+- `DATABASE_URL`: PostgreSQL connection string
+- `SESSION_COOKIE_SECURE`: Set to 'true' for HTTPS
+
+### Production Checklist
+- ✅ Gunicorn WSGI server configured
+- ✅ PostgreSQL support added  
+- ✅ Environment variables configured
+- ✅ Security settings enabled
+- ✅ Static file optimization ready
+
 ## License
 
 MIT License (or your preferred license)

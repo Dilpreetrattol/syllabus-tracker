@@ -1,0 +1,115 @@
+{% extends "hod_base.html" %}
+{% set active_section = 'faculty' %}
+
+{% block title %}Faculty Management{% endblock %}
+
+{% block hod_content %}
+    <div class="hero">
+        <div>
+            <h1 class="h1">Faculty Management</h1>
+            <p style="margin:0; opacity:0.9;">{{ department_name }} Department Faculty</p>
+        </div>
+        <div class="progress-circle">
+            {{ faculty_list|length }}
+        </div>
+    </div>
+
+    {% if faculty_list and faculty_list|length > 0 %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Faculty Name</th>
+                        <th>Email</th>
+                        <th>Subjects Taught</th>
+                        <th>Total Students</th>
+                        <th>Avg Progress</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for faculty in faculty_list %}
+                    <tr>
+                        <td>
+                            <div style="font-weight:700;">{{ faculty.teacher.name }}</div>
+                            <div class="muted" style="font-size:12px;">Faculty ID: {{ faculty.teacher.id }}</div>
+                        </td>
+                        <td>{{ faculty.teacher.email }}</td>
+                        <td>
+                            <div style="font-weight:600;">{{ faculty.subject_count }} Subject{{ 's' if faculty.subject_count != 1 else '' }}</div>
+                            {% if faculty.subjects %}
+                                <div class="muted" style="font-size:12px;">
+                                    {% for subject in faculty.subjects[:2] %}
+                                        {{ subject.code }}{% if not loop.last %}, {% endif %}
+                                    {% endfor %}
+                                    {% if faculty.subjects|length > 2 %}...{% endif %}
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge" style="background:var(--hp-accent1);color:#fff;padding:4px 8px;border-radius:8px;">
+                                {{ faculty.student_count }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress-circle" style="width:40px;height:40px;font-size:12px;">
+                                {{ faculty.avg_progress }}%
+                            </div>
+                        </td>
+                        <td>
+                            <button class="btn-view-report" onclick="viewFacultyDetails({{ faculty.teacher.id }})">
+                                View Details
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="card">
+            <p class="muted" style="text-align: center; padding: 2rem; margin: 0;">
+                No faculty members found in {{ department_name }} department.
+            </p>
+        </div>
+    {% endif %}
+
+    <!-- Faculty Details Modal -->
+    <div id="facultyModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+        <div style="background:#fff;padding:32px;border-radius:20px;max-width:600px;width:90%;max-height:80%;overflow-y:auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <h2 id="modalTitle">Faculty Details</h2>
+                <button onclick="closeFacultyModal()" style="background:none;border:none;font-size:24px;cursor:pointer;">&times;</button>
+            </div>
+            <div id="modalContent">
+                <!-- Faculty details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function viewFacultyDetails(facultyId) {
+            // In a real implementation, you'd fetch faculty details via AJAX
+            // For now, show a placeholder
+            document.getElementById('modalTitle').textContent = 'Faculty Details';
+            document.getElementById('modalContent').innerHTML = `
+                <div style="text-align:center;padding:20px;">
+                    <p>Detailed faculty information and subject management will be available here.</p>
+                    <p style="color:var(--hp-muted);">Faculty ID: ${facultyId}</p>
+                </div>
+            `;
+            document.getElementById('facultyModal').style.display = 'flex';
+        }
+
+        function closeFacultyModal() {
+            document.getElementById('facultyModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('facultyModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeFacultyModal();
+            }
+        });
+    </script>
+{% endblock %}

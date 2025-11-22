@@ -1,0 +1,189 @@
+{% extends "hod_base.html" %}
+{% set active_section = 'reports' %}
+
+{% block title %}Department Reports{% endblock %}
+
+{% block hod_content %}
+    <div class="hero">
+        <div>
+            <h1 class="h1">Department Reports</h1>
+            <p style="margin:0; opacity:0.9;">{{ report_data.department }} Department Analytics</p>
+        </div>
+        <div style="text-align:center;color:#fff;">
+            <div style="font-size:12px;opacity:0.8;">Generated on</div>
+            <div style="font-weight:700;">{{ report_data.generated_date }}</div>
+        </div>
+    </div>
+
+    <div class="stats">
+        <div class="stat">
+            <div class="label">Total Faculty</div>
+            <div class="num">{{ report_data.total_faculty }}</div>
+        </div>
+        <div class="stat">
+            <div class="label">Active Subjects</div>
+            <div class="num">{{ report_data.total_subjects }}</div>
+        </div>
+        <div class="stat">
+            <div class="label">Overall Progress</div>
+            <div class="num">
+                {% if report_data.subjects_report %}
+                    {% set total_progress = report_data.subjects_report | map(attribute='progress_percent') | sum %}
+                    {{ (total_progress / report_data.subjects_report|length) | round(1) }}%
+                {% else %}
+                    0%
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="department-section">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <h2 class="section-title">Subject Progress Report</h2>
+            <button class="btn" onclick="exportReport()">Export CSV</button>
+        </div>
+
+        {% if report_data.subjects_report and report_data.subjects_report|length > 0 %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Teacher</th>
+                            <th>Topics Progress</th>
+                            <th>Students Enrolled</th>
+                            <th>Completion %</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in report_data.subjects_report %}
+                        <tr>
+                            <td>
+                                <div style="font-weight:700;">{{ item.subject.name }}</div>
+                                <div class="muted" style="font-size:12px;">{{ item.subject.code }}</div>
+                            </td>
+                            <td>{{ item.teacher_name }}</td>
+                            <td>
+                                <div style="font-weight:600;">{{ item.completed_topics }}/{{ item.total_topics }} Topics</div>
+                                <div style="width:100px;height:6px;background:#f0f0f0;border-radius:3px;margin-top:4px;">
+                                    <div style="width:{{ item.progress_percent }}%;height:100%;background:var(--hp-accent1);border-radius:3px;"></div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge" style="background:var(--hp-accent2);color:#fff;padding:4px 8px;border-radius:8px;">
+                                    {{ item.student_count }}
+                                </span>
+                            </td>
+                            <td>
+                                <span style="font-weight:700;color:
+                                    {% if item.progress_percent >= 80 %}var(--hp-accent1)
+                                    {% elif item.progress_percent >= 50 %}#f59e0b
+                                    {% else %}#ef4444{% endif %}">
+                                    {{ item.progress_percent }}%
+                                </span>
+                            </td>
+                            <td>
+                                {% if item.progress_percent >= 80 %}
+                                    <span class="status-badge status-active">On Track</span>
+                                {% elif item.progress_percent >= 50 %}
+                                    <span class="status-badge" style="background:#fef3c7;color:#d97706;">Behind</span>
+                                {% else %}
+                                    <span class="status-badge status-inactive">Critical</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="card">
+                <p class="muted" style="text-align: center; padding: 2rem; margin: 0;">
+                    No subject data available for {{ report_data.department }} department.
+                </p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="department-section">
+        <h2 class="section-title">Report Summary</h2>
+        <div class="card">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;">
+                <div>
+                    <h4 style="margin:0 0 8px;color:var(--hp-text);">High Performance</h4>
+                    <p style="margin:0;color:var(--hp-muted);font-size:14px;">
+                        {{ report_data.subjects_report | selectattr('progress_percent', '>=', 80) | list | length }} subjects above 80%
+                    </p>
+                </div>
+                <div>
+                    <h4 style="margin:0 0 8px;color:var(--hp-text);">Needs Attention</h4>
+                    <p style="margin:0;color:var(--hp-muted);font-size:14px;">
+                        {{ report_data.subjects_report | selectattr('progress_percent', '<', 50) | list | length }} subjects below 50%
+                    </p>
+                </div>
+                <div>
+                    <h4 style="margin:0 0 8px;color:var(--hp-text);">Total Enrollment</h4>
+                    <p style="margin:0;color:var(--hp-muted);font-size:14px;">
+                        {{ report_data.subjects_report | map(attribute='student_count') | sum }} students across all subjects
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function exportReport() {
+            // Create CSV data
+            const csvData = [
+                ['Subject Code', 'Subject Name', 'Teacher', 'Total Topics', 'Completed Topics', 'Progress %', 'Students Enrolled', 'Status']
+            ];
+            
+            {% for item in report_data.subjects_report %}
+            csvData.push([
+                '{{ item.subject.code }}',
+                '{{ item.subject.name }}',
+                '{{ item.teacher_name }}',
+                '{{ item.total_topics }}',
+                '{{ item.completed_topics }}',
+                '{{ item.progress_percent }}',
+                '{{ item.student_count }}',
+                '{{ "On Track" if item.progress_percent >= 80 else ("Behind" if item.progress_percent >= 50 else "Critical") }}'
+            ]);
+            {% endfor %}
+            
+            // Convert to CSV string
+            const csvContent = csvData.map(row => row.map(field => '"' + String(field).replace(/"/g, '""') + '"').join(',')).join('\n');
+            
+            // Create and download file
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', '{{ report_data.department }}_Report_{{ report_data.generated_date.replace(" ", "_") }}.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+    </script>
+
+    <style>
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status-inactive {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+{% endblock %}

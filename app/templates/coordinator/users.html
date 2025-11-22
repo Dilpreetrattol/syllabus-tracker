@@ -3,19 +3,19 @@
 {% block title %}User Management{% endblock %}
 {% block coordinator_content %}
   <div class="header">
-    <div class="title">User Management</div>
+    <h1 class="title">User Management</h1>
     <div class="user">
       <div class="avatar">{{ (current_user.name.split()[0][0] + (current_user.name.split()[1][0] if current_user.name.split()|length>1 else ''))|upper }}</div>
       <div>
-        <div style="font-weight:800">{{ current_user.name }}</div>
-        <div style="color:var(--muted);font-size:13px">UG Coordinator</div>
+        <div style="font-weight:700">{{ current_user.name }}</div>
+        <div class="muted" style="font-size:13px">UG Coordinator</div>
       </div>
     </div>
   </div>
 
   <div class="search-row">
     <input class="search" id="searchInput" placeholder="Search by name or email..." />
-    <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:var(--muted);"><input type="checkbox" id="toggleInactive"> Show inactive</label>
+    <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:var(--cp-muted);"><input type="checkbox" id="toggleInactive"> Show inactive</label>
     <button class="btn" id="addUserBtn">Add New User</button>
   </div>
 
@@ -27,7 +27,7 @@
       <tbody id="userTable">
         {% for u in users %}
           <tr data-id="{{ u.id }}" data-active="{{ 'true' if u.is_active else 'false' }}" class="{% if not u.is_active %}inactive{% endif %}">
-            <td>{{ u.name }}{% if not u.is_active %} <span class="badge" style="background:#ddd;color:#555;margin-left:6px;">Inactive</span>{% endif %}<br><small style="color:var(--muted)">{{ u.email }}</small></td>
+            <td>{{ u.name }}{% if not u.is_active %} <span class="status-badge status-inactive">Inactive</span>{% endif %}<br><small class="muted">{{ u.email }}</small></td>
             <td>{{ u.role|capitalize }}</td>
             <td>{{ u.department or '—' }}</td>
             <td>
@@ -48,9 +48,9 @@
   </div>
 
   <!-- Edit User Modal -->
-  <div id="editUserModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.18);z-index:2000;align-items:center;justify-content:center;">
-    <form id="editUserForm" style="background:#fff;padding:32px 28px;border-radius:18px;min-width:320px;max-width:98vw;box-shadow:0 8px 32px rgba(0,0,0,0.18);display:flex;flex-direction:column;gap:18px;">
-      <div style="font-weight:700;font-size:20px;margin-bottom:8px;">Edit User</div>
+  <div id="editUserModal" class="modal">
+    <form id="editUserForm" class="modal-content">
+      <h3>Edit User</h3>
       <input type="hidden" name="id" id="editUserId">
       <div>
         <label>Name</label>
@@ -75,27 +75,27 @@
       </div>
       <div style="display:flex;gap:12px;justify-content:flex-end;">
         <button type="button" class="btn btn-secondary" id="cancelEditUser">Cancel</button>
-        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="submit" class="btn">Save</button>
       </div>
     </form>
   </div>
 
   <!-- Delete User Modal -->
-  <div id="deleteUserModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.18);z-index:2000;align-items:center;justify-content:center;">
-    <div style="background:#fff;padding:28px 24px;border-radius:16px;min-width:300px;max-width:98vw;box-shadow:0 8px 32px rgba(0,0,0,0.18);display:flex;flex-direction:column;gap:18px;align-items:center;">
-      <div style="font-weight:700;font-size:18px;">Delete User</div>
+  <div id="deleteUserModal" class="modal">
+    <div class="modal-content">
+      <h3>Delete User</h3>
       <div id="deleteUserText" style="color:#b00;font-size:15px;text-align:center;"></div>
       <div style="display:flex;gap:12px;justify-content:center;">
         <button type="button" class="btn btn-secondary" id="cancelDeleteUser">Cancel</button>
-        <button type="button" class="btn btn-danger" id="confirmDeleteUser">Delete</button>
+        <button type="button" class="btn" style="background:#ef4444;" id="confirmDeleteUser">Delete</button>
       </div>
     </div>
   </div>
 
   <!-- Create User Modal -->
-  <div id="createUserModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.18);z-index:2000;align-items:center;justify-content:center;">
-    <form id="createUserForm" style="background:#fff;padding:32px 28px;border-radius:18px;min-width:320px;max-width:98vw;box-shadow:0 8px 32px rgba(0,0,0,0.18);display:flex;flex-direction:column;gap:18px;">
-      <div style="font-weight:700;font-size:20px;margin-bottom:8px;">Add New User</div>
+  <div id="createUserModal" class="modal">
+    <form id="createUserForm" class="modal-content">
+      <h3>Add New User</h3>
       <div>
         <label>Name</label>
         <input class="form-control" name="name" id="createUserName" required>
@@ -118,12 +118,12 @@
         <input class="form-control" name="department" id="createUserDepartment">
       </div>
       <div>
-        <label>Password <span style="color:var(--muted);font-size:12px">(optional; default generated)</span></label>
+        <label>Password <span class="muted" style="font-size:12px">(optional; default generated)</span></label>
         <input class="form-control" name="password" id="createUserPassword" placeholder="Leave blank to auto-generate">
       </div>
       <div style="display:flex;gap:12px;justify-content:flex-end;">
         <button type="button" class="btn btn-secondary" id="cancelCreateUser">Cancel</button>
-        <button type="submit" class="btn btn-primary">Create</button>
+        <button type="submit" class="btn">Create</button>
       </div>
     </form>
   </div>
@@ -196,7 +196,7 @@
           const row = document.querySelector(`#userTable tr[data-id='${id}']`);
           if(row){
             const cells = row.querySelectorAll('td');
-            cells[0].innerHTML = `${res.user.name}<br><small style="color:var(--muted)">${res.user.email}</small>`;
+            cells[0].innerHTML = `${res.user.name}<br><small class="muted">${res.user.email}</small>`;
             cells[1].textContent = res.user.role.charAt(0).toUpperCase() + res.user.role.slice(1);
             cells[2].textContent = res.user.department || '—';
             // update button datasets
@@ -227,10 +227,7 @@
               const cells = row.querySelectorAll('td');
               if(cells[0] && !cells[0].querySelector('.badge')){
                 const badge = document.createElement('span');
-                badge.className = 'badge';
-                badge.style.background = '#ddd';
-                badge.style.color = '#555';
-                badge.style.marginLeft = '6px';
+                badge.className = 'status-badge status-inactive';
                 badge.textContent = 'Inactive';
                 cells[0].insertBefore(badge, cells[0].querySelector('small'));
               }

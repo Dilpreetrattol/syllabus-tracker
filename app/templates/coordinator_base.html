@@ -1,20 +1,17 @@
-{% set active_section = active_section or '' %}
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>{% block title %}UG Coordinator{% endblock %}</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-styles.css') }}" />
-  {% block styles %}{% endblock %}
-</head>
-<body>
+{% extends 'base.html' %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/coordinator-portal.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="coordinator-portal">
   <div class="app">
     {% include 'partials/coordinator_sidebar.html' %}
-    <main class="main">
+    <div class="main-panel">
       {% block coordinator_content %}{% endblock %}
-    </main>
+    </div>
   </div>
-  {% block scripts %}{% endblock %}
-</body>
-</html>
+</div>
+{% endblock %}

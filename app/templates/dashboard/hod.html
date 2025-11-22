@@ -1,32 +1,33 @@
-{% extends "base.html" %}
+{% extends "hod_base.html" %}
+{% set active_section = 'dashboard' %}
 
 {% block title %}HOD Dashboard{% endblock %}
 
-{% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/hod-dashboard.css') }}">
-{% endblock %}
-
-{% block content %}
-<div class="hod-dashboard">
-    <div class="dashboard-header">
-        <h1>Department Overview</h1>
-        <p>Head of Department - {{ current_user.department }}</p>
+{% block hod_content %}
+    <div class="hero">
+        <div>
+            <h1 class="h1">Department Overview</h1>
+            <p style="margin:0; opacity:0.9;">Head of Department - {{ current_user.department }}</p>
+        </div>
+        <div class="progress-circle">
+            {{ avg_progress if avg_progress is not none else '0' }}%
+        </div>
     </div>
 
     <div class="metrics-grid">
-        <div class="metric-card" style="border-top-color: #3B82F6;">
+        <div class="metric-card">
             <h3>TOTAL FACULTY</h3>
             <p class="metric-value">{{ faculty_count if faculty_count is not none else '0' }}</p>
         </div>
-        <div class="metric-card" style="border-top-color: #10B981;">
+        <div class="metric-card">
             <h3>ACTIVE SUBJECTS</h3>
             <p class="metric-value">{{ subject_count if subject_count is not none else '0' }}</p>
         </div>
-        <div class="metric-card" style="border-top-color: #F59E0B;">
+        <div class="metric-card">
             <h3>TOTAL STUDENTS</h3>
             <p class="metric-value">{{ student_count if student_count is not none else '0' }}</p>
         </div>
-        <div class="metric-card" style="border-top-color: #EF4444;">
+        <div class="metric-card">
             <h3>AVG PROGRESS</h3>
             <p class="metric-value">{{ avg_progress if avg_progress is not none else '0' }}%</p>
         </div>
@@ -39,24 +40,31 @@
                 {% for item in faculty_data %}
                 <div class="faculty-item">
                     <div>
-                        <h4 style="margin: 0 0 0.25rem 0; color: var(--hod-text);">{{ item.teacher.name }}</h4>
-                        <p style="margin: 0; font-size: 0.875rem; color: var(--hod-text-light);">
+                        <h4>{{ item.teacher.name }}</h4>
+                        <p>
                             Teaching {{ item.subject_count }} subject{{ 's' if item.subject_count != 1 else '' }} • 
                             {{ item.student_count }} student{{ 's' if item.student_count != 1 else '' }}
                         </p>
                     </div>
-                    <a href="{{ url_for('dashboard.hod') }}" class="btn-view-report">View Report</a>
+                    <a href="{{ url_for('dashboard.hod_faculty') }}" class="btn-view-report">View Faculty Page</a>
                 </div>
                 {% endfor %}
             {% else %}
-                <p style="color: var(--hod-text-light); text-align: center; padding: 2rem;">No faculty members found in this department.</p>
+                <p class="muted" style="text-align: center; padding: 2rem;">No faculty members found in this department.</p>
             {% endif %}
+        </div>
+        <div style="text-align: center; margin-top: 1rem;">
+            <a href="{{ url_for('dashboard.hod_faculty') }}" class="btn-primary">View All Faculty</a>
         </div>
     </div>
 
     <div class="department-section">
         <h2 class="section-title">Progress Reports</h2>
-        <p style="color: var(--hod-text-light); text-align: center; padding: 2rem;">Comprehensive reports coming soon...</p>
+        <div class="card">
+            <div style="text-align: center; padding: 2rem;">
+                <p class="muted">Generate comprehensive progress reports for your department</p>
+                <a href="{{ url_for('dashboard.hod_reports') }}" class="btn-primary" style="margin-top: 1rem;">View Reports</a>
+            </div>
+        </div>
     </div>
-</div>
 {% endblock %}

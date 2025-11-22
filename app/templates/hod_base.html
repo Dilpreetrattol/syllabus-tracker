@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/hod-portal.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="hod-portal">
+  <div class="app">
+    {% include 'partials/hod_sidebar.html' %}
+    <div class="main-panel">
+      {% block hod_content %}{% endblock %}
+    </div>
+  </div>
+</div>
+{% endblock %}

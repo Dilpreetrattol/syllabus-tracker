@@ -1,5 +1,5 @@
 from flask import render_template, request, url_for, current_app
-from flask_login import login_required
+from flask_login import login_required, current_user
 from app.blueprints.auth.decorators import role_required
 from . import dashboard_bp
 
@@ -194,6 +194,111 @@ def hod():
                           faculty_data=faculty_data)
 
 
+@dashboard_bp.route('/hod/faculty')
+@login_required
+@role_required('hod')
+def hod_faculty():
+    from app.models import User, Subject, Enrollment, Department
+    from flask_login import current_user
+    from sqlalchemy import func
+    from app import db
+    
+    # Get faculty in HOD's department
+    dept_teachers = User.query.filter_by(
+        department=current_user.department,
+        role='teacher',
+        is_active=True
+    ).all()
+    
+    # Get detailed faculty information
+    faculty_list = []
+    for teacher in dept_teachers:
+        # Get subjects taught by this teacher
+        subjects = Subject.query.filter_by(teacher_id=teacher.id, is_active=True).all()
+        
+        # Calculate total students across all subjects
+        total_students = 0
+        total_progress = 0
+        subject_count = len(subjects)
+        
+        for subject in subjects:
+            student_count = Enrollment.query.filter_by(subject_id=subject.id).count()
+            total_students += student_count
+            
+            # Calculate subject progress
+            total_topics = subject.topics.count()
+            completed_topics = subject.topics.filter_by(is_completed=True).count()
+            subject_progress = (completed_topics / total_topics * 100) if total_topics > 0 else 0
+            total_progress += subject_progress
+        
+        avg_progress = round(total_progress / subject_count, 1) if subject_count > 0 else 0
+        
+        faculty_list.append({
+            'teacher': teacher,
+            'subjects': subjects,
+            'subject_count': subject_count,
+            'student_count': total_students,
+            'avg_progress': avg_progress
+        })
+    
+    return render_template('dashboard/hod_faculty.html',
+                          faculty_list=faculty_list,
+                          department_name=current_user.department)
+
+
+@dashboard_bp.route('/hod/reports')
+@login_required
+@role_required('hod')
+def hod_reports():
+    from app.models import User, Subject, Enrollment, Topic
+    from flask_login import current_user
+    from sqlalchemy import func
+    from app import db
+    from datetime import datetime, timedelta
+    
+    # Get department statistics
+    dept_teachers = User.query.filter_by(
+        department=current_user.department,
+        role='teacher',
+        is_active=True
+    ).all()
+    
+    teacher_ids = [t.id for t in dept_teachers]
+    subjects = Subject.query.filter(
+        Subject.teacher_id.in_(teacher_ids),
+        Subject.is_active == True
+    ).all() if teacher_ids else []
+    
+    # Generate progress report data
+    report_data = {
+        'department': current_user.department,
+        'total_faculty': len(dept_teachers),
+        'total_subjects': len(subjects),
+        'generated_date': datetime.now().strftime('%B %d, %Y'),
+        'subjects_report': []
+    }
+    
+    for subject in subjects:
+        total_topics = subject.topics.count()
+        completed_topics = subject.topics.filter_by(is_completed=True).count()
+        student_count = Enrollment.query.filter_by(subject_id=subject.id).count()
+        progress_percent = (completed_topics / total_topics * 100) if total_topics > 0 else 0
+        
+        # Get teacher name
+        teacher = User.query.get(subject.teacher_id)
+        
+        report_data['subjects_report'].append({
+            'subject': subject,
+            'teacher_name': teacher.name if teacher else 'Unknown',
+            'total_topics': total_topics,
+            'completed_topics': completed_topics,
+            'progress_percent': round(progress_percent, 1),
+            'student_count': student_count
+        })
+    
+    return render_template('dashboard/hod_reports.html', report_data=report_data)
+
+
 @dashboard_bp.route('/coordinator')
 @login_required
 @role_required('coordinator')
@@ -370,3 +475,12 @@ def coordinator_enrollments():
     from app.models import Subject
     subjects = Subject.query.filter_by(is_active=True).order_by(Subject.code.asc()).all()
     return render_template('coordinator/enrollments.html', subjects=subjects, active_section='enrollments')
+
+
+@dashboard_bp.route('/hod/schedule')
+@login_required
+@role_required('hod')
+def hod_schedule():
+    department_name = current_user.department or "Unknown Department"
+    return render_template('dashboard/hod_schedule.html', 
+                         department_name=department_name)
