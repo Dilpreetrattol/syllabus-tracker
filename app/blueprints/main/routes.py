@@ -15,3 +15,9 @@ def about():
 @main_bp.route('/help')
 def help_page():
     return render_template('main/index.html')
+
+
+@main_bp.route('/health')
+def health():
+    """Health check endpoint for deployment platforms"""
+    return {'status': 'healthy', 'message': 'Syllabus Tracker is running'}

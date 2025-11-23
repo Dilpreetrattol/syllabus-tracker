@@ -33,4 +33,11 @@ def create_app(config_class=Config):
     app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
     app.register_blueprint(student_bp)
 
+    # Create tables if they don't exist (for production deployment)
+    with app.app_context():
+        try:
+            db.create_all()
+        except Exception as e:
+            app.logger.error(f"Database initialization error: {e}")
+
     return app
