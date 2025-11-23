@@ -17,7 +17,6 @@ def main():
         '--bind', f'0.0.0.0:{port}',
         '--workers', '1',
         '--timeout', '120',
-        '--keepalive', '2',
         '--max-requests', '1000',
         '--preload'
     ]
