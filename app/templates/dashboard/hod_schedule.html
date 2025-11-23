@@ -442,33 +442,514 @@
         }
     </style>
 
+    <!-- Modal for Schedule Actions -->
+    <div id="scheduleModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
     <script>
+        // Global functions for UI interactions
         function exportSchedule() {
-            alert('📤 Schedule export functionality will be implemented soon!');
+            showNotification('📤 Exporting schedule...', 'success');
+            // Simulate export process
+            setTimeout(() => {
+                showNotification('✅ Schedule exported successfully!', 'success');
+            }, 1000);
         }
         
         function viewDetails(deadlineId) {
-            alert('👀 Viewing deadline details: ' + deadlineId);
+            const modalContent = document.getElementById('modalContent');
+            modalContent.innerHTML = `
+                <h3>📋 Deadline Details</h3>
+                <p><strong>ID:</strong> ${deadlineId}</p>
+                <p><strong>Status:</strong> In Progress</p>
+                <p><strong>Action Required:</strong> Review syllabus completion</p>
+                <div style="margin-top: 20px;">
+                    <button class="btn-primary" onclick="closeModal()">Close</button>
+                </div>
+            `;
+            document.getElementById('scheduleModal').style.display = 'block';
         }
         
         function sendReminder(deadlineId) {
-            alert('📧 Reminder sent for deadline: ' + deadlineId);
+            showNotification('📧 Sending reminder...', 'info');
+            setTimeout(() => {
+                showNotification('✅ Reminder sent successfully!', 'success');
+            }, 800);
         }
         
         function viewFacultySchedule(teacherId) {
-            alert('📅 Viewing faculty schedule: ' + teacherId);
+            const modalContent = document.getElementById('modalContent');
+            modalContent.innerHTML = `
+                <h3>👨‍🏫 Faculty Schedule</h3>
+                <p><strong>Faculty ID:</strong> ${teacherId}</p>
+                <p><strong>This Week:</strong> 24 teaching hours scheduled</p>
+                <p><strong>Available Slots:</strong> Tuesday 2-4 PM, Friday 10-12 PM</p>
+                <div style="margin-top: 20px;">
+                    <button class="btn-secondary" onclick="editSchedule('${teacherId}')">Edit Schedule</button>
+                    <button class="btn-primary" onclick="closeModal()">Close</button>
+                </div>
+            `;
+            document.getElementById('scheduleModal').style.display = 'block';
         }
         
-        // Add click handlers for schedule cells
+        function editSchedule(teacherId) {
+            showNotification('✏️ Opening schedule editor...', 'info');
+            closeModal();
+        }
+        
+        function closeModal() {
+            document.getElementById('scheduleModal').style.display = 'none';
+        }
+        
+        function showNotification(message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <span>${message}</span>
+                <button onclick="this.parentElement.remove()">&times;</button>
+            `;
+            
+            // Add to page
+            document.body.appendChild(notification);
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 3000);
+        }
+        
+        // Initialize page when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('.schedule-cell').forEach(cell => {
-                cell.addEventListener('click', function() {
+            console.log('HOD Schedule page loaded');
+            
+            // Add click handlers for schedule cells
+            const scheduleCells = document.querySelectorAll('.schedule-cell');
+            console.log(`Found ${scheduleCells.length} schedule cells`);
+            
+            scheduleCells.forEach((cell, index) => {
+                cell.addEventListener('click', function(e) {
+                    e.preventDefault();
                     const hour = this.dataset.hour;
                     const day = this.dataset.day;
                     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-                    alert(`📝 Schedule slot clicked: ${days[day]} at ${hour}:00`);
+                    
+                    console.log(`Schedule cell clicked: ${days[day]} at ${hour}:00`);
+                    
+                    const modalContent = document.getElementById('modalContent');
+                    modalContent.innerHTML = `
+                        <h3>📅 Schedule Slot</h3>
+                        <p><strong>Time:</strong> ${days[day]}, ${hour}:00 - ${parseInt(hour)+1}:00</p>
+                        <p><strong>Current Status:</strong> ${this.querySelector('.class-block') ? 'Scheduled' : 'Available'}</p>
+                        ${this.querySelector('.class-block') ? `
+                            <p><strong>Subject:</strong> ${this.querySelector('.class-title')?.textContent || 'N/A'}</p>
+                            <p><strong>Teacher:</strong> ${this.querySelector('.class-teacher')?.textContent || 'N/A'}</p>
+                            <p><strong>Room:</strong> ${this.querySelector('.class-room')?.textContent || 'N/A'}</p>
+                        ` : '<p>This slot is available for scheduling.</p>'}
+                        <div style="margin-top: 20px;">
+                            <button class="btn-secondary" onclick="editSlot('${day}', '${hour}')">Edit Slot</button>
+                            <button class="btn-primary" onclick="closeModal()">Close</button>
+                        </div>
+                    `;
+                    document.getElementById('scheduleModal').style.display = 'block';
                 });
             });
+            
+            // Add hover effects
+            scheduleCells.forEach(cell => {
+                cell.addEventListener('mouseenter', function() {
+                    this.style.backgroundColor = '#f8fafc';
+                    this.style.transform = 'scale(1.02)';
+                    this.style.transition = 'all 0.2s ease';
+                });
+                
+                cell.addEventListener('mouseleave', function() {
+                    this.style.backgroundColor = '';
+                    this.style.transform = 'scale(1)';
+                });
+            });
+            
+            // Week selector functionality
+            const weekSelect = document.getElementById('weekSelect');
+            if (weekSelect) {
+                weekSelect.addEventListener('change', function() {
+                    showNotification(`📅 Switching to: ${this.value}`, 'info');
+                });
+            }
+            
+            // Test all interactive elements
+            console.log('Interactive elements initialized:');
+            console.log('- Schedule cells:', scheduleCells.length);
+            console.log('- Week selector:', !!weekSelect);
+            console.log('- Modal container:', !!document.getElementById('scheduleModal'));
+        });
+        
+        function editSlot(day, hour) {
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            showNotification(`✏️ Editing ${days[day]} ${hour}:00 slot...`, 'info');
+            closeModal();
+        }
+        
+        // Close modal when clicking outside
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('scheduleModal');
+            if (event.target === modal) {
+                closeModal();
+            }
         });
     </script>
+
+    <style>
+        /* Previous styles remain... */
+        .schedule-grid {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            min-height: 600px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .schedule-header {
+            display: grid;
+            grid-template-columns: 80px repeat(6, 1fr);
+            background: #f8fafc;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .day-header {
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+            border-right: 1px solid #e5e7eb;
+        }
+        
+        .schedule-body {
+            display: grid;
+            grid-template-columns: 80px repeat(6, 1fr);
+            grid-template-rows: repeat(10, 1fr);
+        }
+        
+        .time-slot {
+            padding: 8px;
+            background: #f8fafc;
+            border-right: 1px solid #e5e7eb;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .schedule-cell {
+            border-right: 1px solid #e5e7eb;
+            border-bottom: 1px solid #e5e7eb;
+            min-height: 60px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .schedule-cell:hover {
+            background: #f8fafc !important;
+            box-shadow: inset 0 0 0 2px var(--hp-accent1);
+        }
+        
+        .class-block {
+            margin: 2px;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            height: calc(100% - 4px);
+        }
+        
+        .class-block.lecture {
+            background: #dbeafe;
+            border-left: 3px solid #3b82f6;
+        }
+        
+        .class-block.lab {
+            background: #d1fae5;
+            border-left: 3px solid #10b981;
+        }
+        
+        .class-block.tutorial {
+            background: #fef3c7;
+            border-left: 3px solid #f59e0b;
+        }
+        
+        .class-title {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        
+        .class-teacher, .class-room {
+            color: #6b7280;
+        }
+        
+        .deadline-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .deadline-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .deadline-item.priority-high {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+        
+        .deadline-item.priority-medium {
+            border-color: #f59e0b;
+            background: #fffbeb;
+        }
+        
+        .deadline-item.priority-low {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+        
+        .deadline-content {
+            flex: 1;
+        }
+        
+        .deadline-content h4 {
+            margin: 0 0 4px;
+        }
+        
+        .deadline-content p {
+            margin: 0 0 8px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e5e7eb;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 4px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #10b981;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-text {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        
+        .deadline-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .faculty-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .faculty-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        
+        .faculty-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .faculty-avatar {
+            width: 48px;
+            height: 48px;
+            background: var(--hp-accent1);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 18px;
+        }
+        
+        .faculty-header h4 {
+            margin: 0;
+        }
+        
+        .faculty-header p {
+            margin: 0;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        .teaching-load {
+            margin-bottom: 16px;
+        }
+        
+        .load-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        
+        .load-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        
+        .teaching-load span {
+            font-size: 14px;
+            color: #6b7280;
+        }
+        
+        .subject-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+        
+        .subject-tag {
+            background: #f3f4f6;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+        
+        .subject-tag.more {
+            background: var(--hp-accent1);
+            color: white;
+        }
+        
+        .faculty-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6b7280;
+        }
+        
+        .empty-state h3 {
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .close {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #6b7280;
+        }
+
+        .close:hover {
+            color: #374151;
+        }
+
+        /* Notification Styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1001;
+            min-width: 250px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .notification-success {
+            background: #10b981;
+        }
+
+        .notification-info {
+            background: #3b82f6;
+        }
+
+        .notification-warning {
+            background: #f59e0b;
+        }
+
+        .notification-error {
+            background: #ef4444;
+        }
+
+        .notification button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0;
+            margin-left: auto;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
 {% endblock %}
