@@ -33,10 +33,14 @@ def create_app(config_class=Config):
     app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
     app.register_blueprint(student_bp)
 
+    # Import models (required for table creation)
+    from app.models import user, subject, topic, enrollment, topic_progress, course, department, academic_year, comment, resource, notification, activity_log, report_cache
+
     # Create tables if they don't exist (for production deployment)
     with app.app_context():
         try:
             db.create_all()
+            app.logger.info("Database tables created successfully")
         except Exception as e:
             app.logger.error(f"Database initialization error: {e}")
 

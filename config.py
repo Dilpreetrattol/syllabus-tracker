@@ -16,6 +16,7 @@ class Config:
         if DATABASE_URL.startswith('postgres://'):
             DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
         SQLALCHEMY_DATABASE_URI = DATABASE_URL
+        print(f"Using production database: {DATABASE_URL[:50]}...")
     else:
         # Local MySQL configuration
         MYSQL_HOST = os.environ.get('MYSQL_HOST', 'localhost')
@@ -23,8 +24,17 @@ class Config:
         MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD', '')
         MYSQL_DB = os.environ.get('MYSQL_DB', 'syllabus_tracker')
         SQLALCHEMY_DATABASE_URI = f'mysql+mysqlconnector://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}/{MYSQL_DB}'
+        print("Using local MySQL database")
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
+    # Render-specific optimizations
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_recycle': 300,
+        'pool_pre_ping': True,
+        'pool_timeout': 20,
+        'max_overflow': 0
+    }
 
     # Security settings for production
     SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'false').lower() in ('1','true','yes','on')
