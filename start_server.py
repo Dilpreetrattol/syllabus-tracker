@@ -10,6 +10,17 @@ def main():
     """Start the application with proper gunicorn configuration"""
     port = os.environ.get('PORT', '10000')
     
+    # Debug: Check if app.py exists and can be imported
+    try:
+        import app
+        print(f"✅ Successfully imported app module")
+        print(f"✅ App instance found: {hasattr(app, 'app')}")
+        if hasattr(app, 'app'):
+            print(f"✅ App type: {type(app.app)}")
+    except ImportError as e:
+        print(f"❌ Failed to import app: {e}")
+        return
+    
     # Build the correct gunicorn command
     cmd = [
         'gunicorn',
