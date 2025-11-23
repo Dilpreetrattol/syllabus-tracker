@@ -1,6 +1,7 @@
 from flask import render_template, request, url_for, current_app
 from flask_login import login_required, current_user
 from app.blueprints.auth.decorators import role_required
+from datetime import datetime, timedelta
 from . import dashboard_bp
 
 
@@ -482,5 +483,70 @@ def coordinator_enrollments():
 @role_required('hod')
 def hod_schedule():
     department_name = current_user.department or "Unknown Department"
+    
+    # Sample data for the schedule interface
+    sample_data = {
+        'active_schedules': 12,
+        'upcoming_deadlines': 5,
+        'faculty_count': 8,
+        'schedule_efficiency': 87,
+        'schedule_data': {
+            # Monday: 9 AM - Data Structures (Dr. Smith, Room 101)
+            0: {9: {'subject': 'Data Structures', 'teacher': 'Dr. Smith', 'room': 'Room 101', 'type': 'lecture'}},
+            # Tuesday: 10 AM - Algorithms Lab
+            1: {10: {'subject': 'Algorithms Lab', 'teacher': 'Prof. Johnson', 'room': 'Lab 201', 'type': 'lab'}},
+            # Wednesday: 11 AM - Software Engineering
+            2: {11: {'subject': 'Software Eng.', 'teacher': 'Dr. Wilson', 'room': 'Room 203', 'type': 'lecture'}},
+            # Thursday: 2 PM - Database Tutorial
+            3: {14: {'subject': 'Database Tutorial', 'teacher': 'Prof. Davis', 'room': 'Room 105', 'type': 'tutorial'}},
+            # Friday: 3 PM - Web Development
+            4: {15: {'subject': 'Web Development', 'teacher': 'Dr. Brown', 'room': 'Lab 301', 'type': 'lab'}},
+        },
+        'deadlines': [
+            {
+                'id': '1',
+                'subject': 'Data Structures',
+                'topic': 'Trees and Graphs',
+                'teacher': 'Dr. Smith',
+                'due_date': datetime.now() + timedelta(days=3),
+                'completion': 75,
+                'priority': 'medium'
+            },
+            {
+                'id': '2', 
+                'subject': 'Algorithms',
+                'topic': 'Sorting Algorithms',
+                'teacher': 'Prof. Johnson',
+                'due_date': datetime.now() + timedelta(days=1),
+                'completion': 45,
+                'priority': 'high'
+            },
+        ],
+        'faculty_schedule': [
+            {
+                'id': '1',
+                'name': 'Dr. Smith',
+                'subjects': ['Data Structures', 'Algorithms', 'Programming'],
+                'weekly_hours': 18,
+                'load_percentage': 85
+            },
+            {
+                'id': '2',
+                'name': 'Prof. Johnson',
+                'subjects': ['Algorithms', 'Machine Learning', 'AI', 'Statistics'],
+                'weekly_hours': 22,
+                'load_percentage': 95
+            },
+            {
+                'id': '3',
+                'name': 'Dr. Wilson',
+                'subjects': ['Software Engineering', 'DBMS'],
+                'weekly_hours': 16,
+                'load_percentage': 70
+            },
+        ]
+    }
+    
     return render_template('dashboard/hod_schedule.html', 
-                         department_name=department_name)
+                         department_name=department_name,
+                         **sample_data)
