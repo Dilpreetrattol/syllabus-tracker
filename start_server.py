@@ -12,4 +12,4 @@ port = os.environ.get('PORT', '10000')
 print(f"Port: {port}")
 
 # Execute gunicorn directly  
-os.system(f"gunicorn app:app --bind 0.0.0.0:{port} --workers 1 --timeout 120")
+os.system(f"gunicorn wsgi:app --bind 0.0.0.0:{port} --workers 1 --timeout 120")

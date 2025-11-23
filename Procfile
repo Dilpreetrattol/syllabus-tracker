@@ -1,2 +1,2 @@
-web: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120
+web: gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120
 release: python -c "from app import create_app, db; app = create_app(); app.app_context().push(); db.create_all(); print('Database initialized')"
