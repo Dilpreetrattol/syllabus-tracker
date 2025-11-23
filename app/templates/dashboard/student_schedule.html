@@ -1,0 +1,702 @@
+{% extends "student_base.html" %}
+{% set active_section = 'schedule' %}
+
+{% block title %}My Class Schedule{% endblock %}
+
+{% block student_content %}
+    <div class="hero">
+        <div>
+            <h1 class="h1">My Class Schedule</h1>
+            <p style="margin:0; opacity:0.9;">{{ student_name }}'s Weekly Timetable</p>
+        </div>
+        <div class="progress-circle" style="background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 16px; color: white;">
+            🎓
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-icon" style="color: #4ade80;">📚</div>
+            <div>
+                <h3>Classes This Week</h3>
+                <p class="metric-number">{{ stats.total_classes_week }}</p>
+                <p class="metric-label">Total scheduled</p>
+            </div>
+        </div>
+        
+        <div class="metric-card">
+            <div class="metric-icon" style="color: #3b82f6;">✅</div>
+            <div>
+                <h3>Attended</h3>
+                <p class="metric-number">{{ stats.attended_classes }}</p>
+                <p class="metric-label">Classes attended</p>
+            </div>
+        </div>
+        
+        <div class="metric-card">
+            <div class="metric-icon" style="color: #f59e0b;">⏰</div>
+            <div>
+                <h3>Upcoming</h3>
+                <p class="metric-number">{{ stats.upcoming_classes }}</p>
+                <p class="metric-label">Next classes</p>
+            </div>
+        </div>
+        
+        <div class="metric-card">
+            <div class="metric-icon" style="color: #8b5cf6;">📊</div>
+            <div>
+                <h3>Attendance</h3>
+                <p class="metric-number">{{ stats.overall_attendance }}%</p>
+                <p class="metric-label">Overall rate</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weekly Schedule Overview -->
+    <div class="department-section">
+        <div class="section-header">
+            <h2 class="section-title">Weekly Class Schedule</h2>
+            <div class="header-actions">
+                <select id="weekSelect" style="padding: 8px 12px; border-radius: 6px; border: 1px solid #e5e7eb;">
+                    <option>Current Week</option>
+                    <option>Next Week</option>
+                    <option>Previous Week</option>
+                </select>
+                <button class="btn-primary" onclick="exportSchedule()">📤 Export</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="schedule-grid">
+                <div class="schedule-header">
+                    <div class="time-column"></div>
+                    <div class="day-header">Monday</div>
+                    <div class="day-header">Tuesday</div>
+                    <div class="day-header">Wednesday</div>
+                    <div class="day-header">Thursday</div>
+                    <div class="day-header">Friday</div>
+                    <div class="day-header">Saturday</div>
+                </div>
+                
+                <div class="schedule-body">
+                    {% for hour in range(8, 18) %}
+                    <div class="time-slot">{{ '%02d:00'|format(hour) }}</div>
+                    {% for day in range(6) %}
+                    <div class="schedule-cell" data-hour="{{ hour }}" data-day="{{ day }}">
+                        {% if schedule_data and schedule_data.get(day, {}).get(hour) %}
+                            <div class="class-block {{ schedule_data[day][hour].type }}">
+                                <div class="class-title">{{ schedule_data[day][hour].subject }}</div>
+                                <div class="class-teacher">{{ schedule_data[day][hour].teacher }}</div>
+                                <div class="class-room">{{ schedule_data[day][hour].room }}</div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Classes -->
+    <div class="department-section">
+        <h2 class="section-title">Next Classes</h2>
+        
+        <div class="card">
+            {% if upcoming_classes %}
+            <div class="upcoming-list">
+                {% for class in upcoming_classes %}
+                <div class="upcoming-item">
+                    <div class="upcoming-time">
+                        <div class="time-display">{{ class.time.strftime('%I:%M %p') }}</div>
+                        <div class="date-display">{{ class.time.strftime('%b %d') }}</div>
+                    </div>
+                    <div class="upcoming-content">
+                        <h4>{{ class.subject }}</h4>
+                        <p>{{ class.teacher }} | {{ class.room }} | {{ class.type.title() }}</p>
+                        <div class="preparation-status">
+                            {% if class.preparation_needed %}
+                                <span class="status-badge needed">📝 Preparation Required</span>
+                            {% else %}
+                                <span class="status-badge ready">✅ Ready to Attend</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="upcoming-actions">
+                        <button class="btn-secondary btn-sm" onclick="viewClassInfo('{{ class.id }}')">Info</button>
+                        <button class="btn-primary btn-sm" onclick="setReminder('{{ class.id }}')">Remind</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div style="font-size: 48px; margin-bottom: 1rem;">🎉</div>
+                <h3>No Upcoming Classes</h3>
+                <p>Enjoy your free time!</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Assignments & Deadlines -->
+    <div class="department-section">
+        <h2 class="section-title">Assignments & Deadlines</h2>
+        
+        <div class="card">
+            {% if deadlines %}
+            <div class="deadline-list">
+                {% for deadline in deadlines %}
+                <div class="deadline-item priority-{{ deadline.priority }}">
+                    <div class="deadline-icon">
+                        {% if deadline.type == 'assignment' %}📝
+                        {% elif deadline.type == 'quiz' %}📋
+                        {% elif deadline.type == 'exam' %}📊
+                        {% else %}📚{% endif %}
+                    </div>
+                    <div class="deadline-content">
+                        <h4>{{ deadline.title }}</h4>
+                        <p>{{ deadline.subject }} | Due: {{ deadline.due_date.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                        <div class="priority-badge">
+                            {% if deadline.priority == 'high' %}
+                                <span class="status-badge high">🔴 High Priority</span>
+                            {% elif deadline.priority == 'medium' %}
+                                <span class="status-badge medium">🟡 Medium Priority</span>
+                            {% else %}
+                                <span class="status-badge low">🟢 Low Priority</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="deadline-actions">
+                        <button class="btn-secondary btn-sm" onclick="viewDeadlineDetails('{{ deadline.id }}')">View</button>
+                        {% if deadline.status == 'pending' %}
+                            <button class="btn-primary btn-sm" onclick="startWork('{{ deadline.id }}')">Start</button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div style="font-size: 48px; margin-bottom: 1rem;">✅</div>
+                <h3>No Pending Assignments</h3>
+                <p>All caught up!</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Study Summary -->
+    <div class="department-section">
+        <h2 class="section-title">Study Summary</h2>
+        
+        <div class="load-cards">
+            <div class="load-card">
+                <div class="load-header">
+                    <h4>📖 Study Hours</h4>
+                    <span class="load-value">{{ stats.study_hours }}h/week</span>
+                </div>
+                <div class="load-bar">
+                    <div class="load-fill" style="width: {{ (stats.study_hours / 30 * 100) | round }}%; background: #3b82f6;"></div>
+                </div>
+                <p class="load-caption">{{ (stats.study_hours / 30 * 100) | round }}% of recommended</p>
+            </div>
+            
+            <div class="load-card">
+                <div class="load-header">
+                    <h4>📝 Pending Work</h4>
+                    <span class="load-value">{{ stats.assignments_pending }} items</span>
+                </div>
+                <div class="load-bar">
+                    <div class="load-fill" style="width: {{ (stats.assignments_pending / 10 * 100) | round }}%; background: {% if stats.assignments_pending > 5 %}#ef4444{% elif stats.assignments_pending > 2 %}#f59e0b{% else %}#10b981{% endif %};"></div>
+                </div>
+                <p class="load-caption">
+                    {% if stats.assignments_pending > 5 %}Heavy workload
+                    {% elif stats.assignments_pending > 2 %}Moderate workload
+                    {% else %}Light workload{% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Schedule Actions -->
+    <div id="scheduleModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <style>
+        .schedule-grid {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            min-height: 600px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .schedule-header {
+            display: grid;
+            grid-template-columns: 80px repeat(6, 1fr);
+            background: #f8fafc;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .day-header {
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+            border-right: 1px solid #e5e7eb;
+        }
+        
+        .schedule-body {
+            display: grid;
+            grid-template-columns: 80px repeat(6, 1fr);
+            grid-template-rows: repeat(10, 1fr);
+        }
+        
+        .time-slot {
+            padding: 8px;
+            background: #f8fafc;
+            border-right: 1px solid #e5e7eb;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .schedule-cell {
+            border-right: 1px solid #e5e7eb;
+            border-bottom: 1px solid #e5e7eb;
+            min-height: 60px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .schedule-cell:hover {
+            background: #f8fafc !important;
+            box-shadow: inset 0 0 0 2px var(--s-accent1);
+        }
+        
+        .class-block {
+            margin: 2px;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            height: calc(100% - 4px);
+        }
+        
+        .class-block.lecture {
+            background: #dbeafe;
+            border-left: 3px solid #3b82f6;
+        }
+        
+        .class-block.lab {
+            background: #d1fae5;
+            border-left: 3px solid #10b981;
+        }
+        
+        .class-block.tutorial {
+            background: #fef3c7;
+            border-left: 3px solid #f59e0b;
+        }
+        
+        .class-block.study {
+            background: #f3e8ff;
+            border-left: 3px solid #a855f7;
+        }
+        
+        .class-title {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        
+        .class-teacher, .class-room {
+            color: #6b7280;
+            font-size: 10px;
+        }
+        
+        .upcoming-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .upcoming-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .upcoming-time {
+            text-align: center;
+            min-width: 80px;
+        }
+        
+        .time-display {
+            font-weight: 600;
+            color: #3b82f6;
+        }
+        
+        .date-display {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        
+        .upcoming-content {
+            flex: 1;
+        }
+        
+        .upcoming-content h4 {
+            margin: 0 0 4px;
+        }
+        
+        .upcoming-content p {
+            margin: 0 0 8px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        .status-badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        
+        .status-badge.ready {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-badge.needed {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-badge.high {
+            background: #fef2f2;
+            color: #991b1b;
+        }
+        
+        .status-badge.medium {
+            background: #fffbeb;
+            color: #92400e;
+        }
+        
+        .status-badge.low {
+            background: #f0fdf4;
+            color: #065f46;
+        }
+        
+        .upcoming-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .deadline-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .deadline-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .deadline-item.priority-high {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+        
+        .deadline-item.priority-medium {
+            border-color: #f59e0b;
+            background: #fffbeb;
+        }
+        
+        .deadline-item.priority-low {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+        
+        .deadline-icon {
+            font-size: 24px;
+            min-width: 40px;
+            text-align: center;
+        }
+        
+        .deadline-content {
+            flex: 1;
+        }
+        
+        .deadline-content h4 {
+            margin: 0 0 4px;
+        }
+        
+        .deadline-content p {
+            margin: 0 0 8px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        .deadline-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .load-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .load-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        
+        .load-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .load-header h4 {
+            margin: 0;
+        }
+        
+        .load-value {
+            font-weight: 600;
+            color: #3b82f6;
+        }
+        
+        .load-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        
+        .load-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        
+        .load-caption {
+            font-size: 12px;
+            color: #6b7280;
+            margin: 0;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6b7280;
+        }
+        
+        .empty-state h3 {
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        /* Modal and notification styles */
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .close {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #6b7280;
+        }
+
+        .close:hover {
+            color: #374151;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1001;
+            min-width: 250px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .notification-success { background: #10b981; }
+        .notification-info { background: #3b82f6; }
+        .notification-warning { background: #f59e0b; }
+        .notification-error { background: #ef4444; }
+
+        .notification button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0;
+            margin-left: auto;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+
+    <script>
+        function exportSchedule() {
+            showNotification('📤 Exporting class schedule...', 'success');
+            setTimeout(() => {
+                showNotification('✅ Schedule exported successfully!', 'success');
+            }, 1000);
+        }
+        
+        function viewClassInfo(classId) {
+            const modalContent = document.getElementById('modalContent');
+            modalContent.innerHTML = `
+                <h3>📚 Class Information</h3>
+                <p><strong>Class ID:</strong> ${classId}</p>
+                <p><strong>What to bring:</strong> Notebook, textbook, assignments</p>
+                <p><strong>Prerequisites:</strong> Complete previous readings</p>
+                <div style="margin-top: 20px;">
+                    <button class="btn-primary" onclick="closeModal()">Close</button>
+                </div>
+            `;
+            document.getElementById('scheduleModal').style.display = 'block';
+        }
+        
+        function setReminder(classId) {
+            showNotification('⏰ Setting class reminder...', 'info');
+            setTimeout(() => {
+                showNotification('✅ Reminder set successfully!', 'success');
+            }, 800);
+        }
+        
+        function viewDeadlineDetails(deadlineId) {
+            const modalContent = document.getElementById('modalContent');
+            modalContent.innerHTML = `
+                <h3>📝 Assignment Details</h3>
+                <p><strong>Assignment ID:</strong> ${deadlineId}</p>
+                <p><strong>Requirements:</strong> Complete all questions and submit on time</p>
+                <p><strong>Resources:</strong> Check course materials and library</p>
+                <div style="margin-top: 20px;">
+                    <button class="btn-primary" onclick="closeModal()">Close</button>
+                </div>
+            `;
+            document.getElementById('scheduleModal').style.display = 'block';
+        }
+        
+        function startWork(deadlineId) {
+            showNotification('🚀 Opening assignment workspace...', 'info');
+            setTimeout(() => {
+                showNotification('✅ Ready to start working!', 'success');
+            }, 800);
+        }
+        
+        function closeModal() {
+            document.getElementById('scheduleModal').style.display = 'none';
+        }
+        
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <span>${message}</span>
+                <button onclick="this.parentElement.remove()">&times;</button>
+            `;
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 3000);
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const scheduleCells = document.querySelectorAll('.schedule-cell');
+            
+            scheduleCells.forEach(cell => {
+                cell.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const hour = this.dataset.hour;
+                    const day = this.dataset.day;
+                    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                    
+                    const modalContent = document.getElementById('modalContent');
+                    modalContent.innerHTML = `
+                        <h3>📅 Time Slot</h3>
+                        <p><strong>Time:</strong> ${days[day]}, ${hour}:00 - ${parseInt(hour)+1}:00</p>
+                        <p><strong>Status:</strong> ${this.querySelector('.class-block') ? 'Class Scheduled' : 'Free Time'}</p>
+                        ${this.querySelector('.class-block') ? `
+                            <p><strong>Subject:</strong> ${this.querySelector('.class-title')?.textContent || 'N/A'}</p>
+                            <p><strong>Teacher:</strong> ${this.querySelector('.class-teacher')?.textContent || 'N/A'}</p>
+                            <p><strong>Room:</strong> ${this.querySelector('.class-room')?.textContent || 'N/A'}</p>
+                        ` : '<p>This is free time - great for studying!</p>'}
+                        <div style="margin-top: 20px;">
+                            <button class="btn-primary" onclick="closeModal()">Close</button>
+                        </div>
+                    `;
+                    document.getElementById('scheduleModal').style.display = 'block';
+                });
+            });
+            
+            const weekSelect = document.getElementById('weekSelect');
+            if (weekSelect) {
+                weekSelect.addEventListener('change', function() {
+                    showNotification(`📅 Switching to: ${this.value}`, 'info');
+                });
+            }
+        });
+        
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('scheduleModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+    </script>
+{% endblock %}

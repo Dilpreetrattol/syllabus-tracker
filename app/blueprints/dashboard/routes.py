@@ -478,6 +478,242 @@ def coordinator_enrollments():
     return render_template('coordinator/enrollments.html', subjects=subjects, active_section='enrollments')
 
 
+@dashboard_bp.route('/teacher/schedule')
+@login_required
+@role_required('teacher')
+def teacher_schedule():
+    # Sample teacher schedule data
+    schedule_data = {
+        0: {  # Monday
+            9: {'subject': 'Data Structures', 'room': 'CS-101', 'type': 'lecture', 'students': 45},
+            11: {'subject': 'Algorithms Lab', 'room': 'CS-Lab2', 'type': 'lab', 'students': 30},
+            14: {'subject': 'Database Systems', 'room': 'CS-102', 'type': 'lecture', 'students': 50}
+        },
+        1: {  # Tuesday
+            10: {'subject': 'Data Structures', 'room': 'CS-101', 'type': 'tutorial', 'students': 25},
+            15: {'subject': 'Web Development', 'room': 'CS-103', 'type': 'lecture', 'students': 40}
+        },
+        2: {  # Wednesday
+            9: {'subject': 'Database Systems', 'room': 'CS-102', 'type': 'lecture', 'students': 50},
+            13: {'subject': 'Algorithms Lab', 'room': 'CS-Lab2', 'type': 'lab', 'students': 30}
+        },
+        3: {  # Thursday
+            11: {'subject': 'Web Development', 'room': 'CS-103', 'type': 'tutorial', 'students': 20},
+            14: {'subject': 'Data Structures', 'room': 'CS-101', 'type': 'lecture', 'students': 45}
+        },
+        4: {  # Friday
+            10: {'subject': 'Database Systems', 'room': 'CS-102', 'type': 'tutorial', 'students': 25},
+            16: {'subject': 'Office Hours', 'room': 'Faculty-12', 'type': 'consultation', 'students': 5}
+        }
+    }
+    
+    # Sample upcoming classes
+    upcoming_classes = [
+        {
+            'id': 1,
+            'subject': 'Data Structures',
+            'time': datetime.now() + timedelta(hours=2),
+            'room': 'CS-101',
+            'students': 45,
+            'type': 'lecture',
+            'preparation_status': 'ready'
+        },
+        {
+            'id': 2,
+            'subject': 'Algorithms Lab',
+            'time': datetime.now() + timedelta(days=1, hours=1),
+            'room': 'CS-Lab2',
+            'students': 30,
+            'type': 'lab',
+            'preparation_status': 'pending'
+        },
+        {
+            'id': 3,
+            'subject': 'Database Systems',
+            'time': datetime.now() + timedelta(days=1, hours=4),
+            'room': 'CS-102',
+            'students': 50,
+            'type': 'lecture',
+            'preparation_status': 'ready'
+        }
+    ]
+    
+    # Sample teaching stats
+    stats = {
+        'total_classes_week': 12,
+        'completed_classes': 8,
+        'upcoming_classes': len(upcoming_classes),
+        'teaching_hours': 18,
+        'office_hours': 4,
+        'students_taught': 145
+    }
+    
+    return render_template('dashboard/teacher_schedule.html',
+                         schedule_data=schedule_data,
+                         upcoming_classes=upcoming_classes,
+                         stats=stats,
+                         teacher_name=current_user.name)
+
+
+@dashboard_bp.route('/coordinator/schedule')
+@login_required
+@role_required('coordinator')
+def coordinator_schedule():
+    # Sample coordinator schedule data
+    schedule_data = {
+        0: {  # Monday
+            9: {'activity': 'Faculty Meeting', 'location': 'Conference Room', 'type': 'meeting', 'attendees': 15},
+            11: {'activity': 'Curriculum Review', 'location': 'Admin Office', 'type': 'review', 'attendees': 5},
+            14: {'activity': 'Student Counseling', 'location': 'Counseling Room', 'type': 'counseling', 'attendees': 10}
+        },
+        1: {  # Tuesday
+            10: {'activity': 'Department Planning', 'location': 'Conference Room', 'type': 'meeting', 'attendees': 12},
+            15: {'activity': 'Academic Committee', 'location': 'Board Room', 'type': 'committee', 'attendees': 8}
+        },
+        2: {  # Wednesday
+            9: {'activity': 'Class Observation', 'location': 'Various Classes', 'type': 'observation', 'attendees': 2},
+            13: {'activity': 'Budget Review', 'location': 'Finance Office', 'type': 'review', 'attendees': 4}
+        },
+        3: {  # Thursday
+            11: {'activity': 'Student Appeals', 'location': 'Admin Office', 'type': 'counseling', 'attendees': 6},
+            14: {'activity': 'Faculty Development', 'location': 'Training Room', 'type': 'training', 'attendees': 20}
+        },
+        4: {  # Friday
+            10: {'activity': 'Course Approval', 'location': 'Committee Room', 'type': 'committee', 'attendees': 8},
+            16: {'activity': 'Weekly Reports', 'location': 'Office', 'type': 'admin', 'attendees': 2}
+        }
+    }
+    
+    # Sample upcoming activities
+    upcoming_activities = [
+        {
+            'id': 1,
+            'activity': 'Faculty Meeting',
+            'time': datetime.now() + timedelta(hours=3),
+            'location': 'Conference Room',
+            'attendees': 15,
+            'type': 'meeting',
+            'priority': 'high'
+        },
+        {
+            'id': 2,
+            'activity': 'Curriculum Review',
+            'time': datetime.now() + timedelta(days=1, hours=2),
+            'location': 'Admin Office',
+            'attendees': 5,
+            'type': 'review',
+            'priority': 'medium'
+        }
+    ]
+    
+    # Sample coordinator stats
+    stats = {
+        'total_activities_week': 10,
+        'completed_activities': 6,
+        'upcoming_activities': len(upcoming_activities),
+        'meeting_hours': 12,
+        'admin_hours': 25,
+        'faculty_managed': 18
+    }
+    
+    return render_template('dashboard/coordinator_schedule.html',
+                         schedule_data=schedule_data,
+                         upcoming_activities=upcoming_activities,
+                         stats=stats,
+                         coordinator_name=current_user.name)
+
+
+@dashboard_bp.route('/student/schedule')
+@login_required
+@role_required('student')
+def student_schedule():
+    # Sample student schedule data
+    schedule_data = {
+        0: {  # Monday
+            9: {'subject': 'Data Structures', 'teacher': 'Dr. Smith', 'room': 'CS-101', 'type': 'lecture'},
+            11: {'subject': 'Mathematics', 'teacher': 'Prof. Johnson', 'room': 'Math-201', 'type': 'lecture'},
+            14: {'subject': 'Physics Lab', 'teacher': 'Dr. Brown', 'room': 'Phy-Lab1', 'type': 'lab'}
+        },
+        1: {  # Tuesday
+            10: {'subject': 'Database Systems', 'teacher': 'Dr. Wilson', 'room': 'CS-102', 'type': 'lecture'},
+            15: {'subject': 'English', 'teacher': 'Ms. Davis', 'room': 'Eng-301', 'type': 'lecture'}
+        },
+        2: {  # Wednesday
+            9: {'subject': 'Data Structures', 'teacher': 'Dr. Smith', 'room': 'CS-101', 'type': 'tutorial'},
+            13: {'subject': 'Chemistry Lab', 'teacher': 'Dr. Miller', 'room': 'Chem-Lab2', 'type': 'lab'}
+        },
+        3: {  # Thursday
+            11: {'subject': 'Database Systems', 'teacher': 'Dr. Wilson', 'room': 'CS-102', 'type': 'tutorial'},
+            14: {'subject': 'Mathematics', 'teacher': 'Prof. Johnson', 'room': 'Math-201', 'type': 'lecture'}
+        },
+        4: {  # Friday
+            10: {'subject': 'English', 'teacher': 'Ms. Davis', 'room': 'Eng-301', 'type': 'tutorial'},
+            16: {'subject': 'Study Hall', 'teacher': 'Self Study', 'room': 'Library', 'type': 'study'}
+        }
+    }
+    
+    # Sample upcoming classes
+    upcoming_classes = [
+        {
+            'id': 1,
+            'subject': 'Data Structures',
+            'teacher': 'Dr. Smith',
+            'time': datetime.now() + timedelta(hours=2),
+            'room': 'CS-101',
+            'type': 'lecture',
+            'preparation_needed': True
+        },
+        {
+            'id': 2,
+            'subject': 'Mathematics',
+            'teacher': 'Prof. Johnson',
+            'time': datetime.now() + timedelta(days=1, hours=1),
+            'room': 'Math-201',
+            'type': 'lecture',
+            'preparation_needed': False
+        }
+    ]
+    
+    # Sample assignments and exams
+    deadlines = [
+        {
+            'id': 1,
+            'title': 'Data Structures Assignment',
+            'subject': 'Data Structures',
+            'due_date': datetime.now() + timedelta(days=3),
+            'type': 'assignment',
+            'priority': 'high',
+            'status': 'pending'
+        },
+        {
+            'id': 2,
+            'title': 'Mathematics Quiz',
+            'subject': 'Mathematics',
+            'due_date': datetime.now() + timedelta(days=5),
+            'type': 'quiz',
+            'priority': 'medium',
+            'status': 'pending'
+        }
+    ]
+    
+    # Sample student stats
+    stats = {
+        'total_classes_week': 14,
+        'attended_classes': 12,
+        'upcoming_classes': len(upcoming_classes),
+        'study_hours': 20,
+        'assignments_pending': len([d for d in deadlines if d['status'] == 'pending']),
+        'overall_attendance': 86
+    }
+    
+    return render_template('dashboard/student_schedule.html',
+                         schedule_data=schedule_data,
+                         upcoming_classes=upcoming_classes,
+                         deadlines=deadlines,
+                         stats=stats,
+                         student_name=current_user.name)
+
+
 @dashboard_bp.route('/hod/schedule')
 @login_required
 @role_required('hod')
