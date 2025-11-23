@@ -2,7 +2,7 @@
   <div class="brand">ti</div>
   <a class="nav-item {% if active_section=='dashboard' %}active{% endif %}" href="{{ url_for('dashboard.teacher') }}">🏠 <div>Dashboard</div></a>
   <a class="nav-item {% if active_section=='subjects' %}active{% endif %}" href="{{ url_for('dashboard.teacher') }}#subjects">📚 <div>Subjects</div></a>
-  <a class="nav-item {% if active_section=='schedule' %}active{% endif %}" href="#">📅 <div>Schedule</div></a>
+  <a class="nav-item {% if active_section=='schedule' %}active{% endif %}" href="{{ url_for('dashboard.teacher_schedule') }}">📅 <div>Schedule</div></a>
   <a class="nav-item" href="{{ url_for('auth.change_password') }}">🔑 <div>Change Password</div></a>
   <a class="nav-item" style="margin-top:auto" href="{{ url_for('auth.logout') }}">🔒 <div>Logout</div></a>
 </aside>

@@ -6,7 +6,7 @@
   <a class="nav-item {% if active_section=='subjects' %}active{% endif %}" href="{{ url_for('student.subjects') }}">
     <span>📚</span><div>Subjects</div>
   </a>
-  <a class="nav-item {% if active_section=='schedule' %}active{% endif %}" href="#"><span>📅</span><div>Schedule</div></a>
+  <a class="nav-item {% if active_section=='schedule' %}active{% endif %}" href="{{ url_for('dashboard.student_schedule') }}"><span>📅</span><div>Schedule</div></a>
   <a class="nav-item" href="{{ url_for('auth.change_password') }}"><span>🔑</span><div>Change Password</div></a>
   <a class="logout" href="{{ url_for('auth.logout') }}">Logout</a>
 </aside>
